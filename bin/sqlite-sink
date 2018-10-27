@@ -1,0 +1,78 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import time
+import json
+import Queue
+import sqlite3
+from rpjios.sensors.Base import PSubscriber, Message
+
+SQLITE_DEFAULT_PATH = '/home/pi/rpjios-sensors.sqlite3'
+
+if __name__ == '__main__':
+    sql_path = SQLITE_DEFAULT_PATH if len(sys.argv) < 2 else sys.argv[1]
+
+    if os.path.exists(sql_path):
+        print "* Removing previous DB"
+        os.remove(sql_path)
+
+    print "* Connecting to '{}'".format(sql_path)
+    sqconn = sqlite3.connect(sql_path)
+
+    cur = sqconn.cursor()
+
+    cur.execute("CREATE TABLE data (id integer primary key, source text, time real, uuid text, value text)")
+    cur.execute("CREATE TABLE status (id integer primary key, source text, time real, uuid text, status text)")
+    sqconn.commit()
+
+    msg_q = Queue.Queue()
+    def msg_cb(val):
+        if 'data' in val:
+            msg_q.put(json.loads(val['data']))
+
+    ps = PSubscriber("*").add_listener(msg_cb)
+
+    added_rows = 0
+    failed_add = 0
+    errors = 0
+    failed_consec = 0
+    last_failed = False
+    while failed_consec < 10:
+        val = msg_q.get()
+        retries = 3
+        committed = False
+        while retries:
+            try:
+                c = sqconn.cursor()
+                if val['type'] == Message.GENERAL:
+                    arg = (val['source'], val['ts'], val['id'], json.dumps(val['value']))
+                    c.execute("INSERT INTO data VALUES(NULL, ?, ?, ?, ?)", arg)
+                else:
+                    arg = (val['source'], val['ts'], val['id'], val['type'])
+                    c.execute("INSERT INTO status VALUES(NULL, ?, ?, ?, ?)", arg)
+
+                sqconn.commit()
+                committed = True
+                retries = 0
+                break
+            except Exception as sqle:
+                print "Error: {}. Will retry {} times".format(sqle, retries)
+                retries -= 1
+                errors += 1
+                time.sleep(0.25)
+        if committed:
+            added_rows += 1
+            last_failed = False
+            failed_consec = 0
+        else:
+            failed_add += 1
+            failed_consec += 1 if last_failed else 0
+            last_failed = True
+            print "Retries failed! Will loop around again {} times...".format(10 - failed_consec - 1)
+        sys.stdout.write("  Added rows/Failed adds/Total errors: {}/{}/{}\r".format(added_rows, failed_add, errors))
+
+    if failed_consec:
+        print "Massive failure!"
+
+    print "* Done!"

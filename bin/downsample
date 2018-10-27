@@ -1,0 +1,98 @@
+#!/usr/bin/env python
+
+import sys
+import json
+import time
+import redis
+import Queue
+import getopt
+import threading
+from rpjios.Util import parse_redis_url
+
+def inject_custom_opts(r_opts):
+    r_opts['socket_connect_timeout'] = 10.0
+    return r_opts
+
+if __name__ == "__main__":
+    ops, args = getopt.getopt(sys.argv[1:], 'di:o:m:r:p:t:')
+
+    o_d = {}
+    for e in ops:
+        o_d[e[0].replace('-','')] = e[1]
+
+    if not ('i' in o_d and 'o' in o_d and 'p' in o_d):
+        print "Usage: {} -i input_redis_url -o output_redis_url -p subscription_pattern -m mode -r rate -t passthru_mode\n".format(sys.argv[0])
+        sys.exit(0)
+
+    i_urip = parse_redis_url(o_d['i'])
+    o_urip = parse_redis_url(o_d['o'])
+
+    if 'host' not in i_urip or 'host' not in o_urip:
+        raise Exception("Bad host spec(s)!")
+
+    i_r = redis.StrictRedis(**inject_custom_opts(i_urip))
+    o_r = redis.StrictRedis(**inject_custom_opts(o_urip))
+
+    s_r = int(o_d['r']) if 'r' in o_d else 10
+    md = o_d['m'] if 'm' in o_d else None
+    mt = o_d['t'] if 't' in o_d else None
+    print "Input:   {}".format(o_d['i'])
+    print "Output:  {}".format(o_d['o'])
+    print "Pattern: {}".format(o_d['p'])
+    print "Rate:    {}".format(s_r)
+    print "Mode:    {}".format(md)
+    print "P-thru:  {}".format(mt)
+
+    s_d = {}
+    i_ps = i_r.pubsub()
+    i_ps.psubscribe(o_d['p'])
+
+    for m in i_ps.listen():
+        try:
+            if 'channel' in m and 'data' in m:
+                if 'd' in o_d:
+                    print ">>> MSG: {}".format(m)
+
+                if 'subscribe' in m['type']:
+                    continue
+
+                _c = m['channel']
+                _d = m['data']
+                _d_d = json.loads(_d)
+
+                if _d_d['type'] == 'AVAILABLE':
+                    continue
+
+                _first = False
+                if _c not in s_d:
+                    _first = True
+                    s_d[_c] = []
+
+                s_d[_c].append(_d)
+                if 'd' in o_d:
+                    print ">>> s_d:"
+                    for k in s_d:
+                        print ">>>\t{}: {}".format(k, len(s_d[k]))
+
+                # TODO: queue up sends for a different thread so as not to miss
+                # any messages that come in from the .listen() call!
+                if len(s_d[_c]) == s_r or _first:
+                    if md == 'avg':
+                        # TODO: _d = avg
+                        pass
+
+                    if not mt:
+                        if 'd' in o_d:
+                            print ">>> PUB {} {}".format(_c, _d)
+                        o_r.publish(_c, _d)
+                    elif mt == 'key':
+                        _kn = '.'.join(_c.split('.')[:-1])
+                        if 'd' in o_d:
+                            print ">>> SET {} {}".format(_kn, _d)
+                        if not o_r.set(_kn, _d):
+                            raise Exception("key set! {} {}".format(_kn, _d))
+
+                    del s_d[_c]
+                    s_d[_c] = []
+        except Exception as e:
+            print "Error: {}".format(e)

@@ -1,0 +1,121 @@
+#!/usr/bin/env python
+
+import sys
+import time
+import json
+from rpjios import Sensors
+from rpjios.sensors.Base import PSubscriber, Message
+from monotonic import time as mt
+
+import Adafruit_GPIO.SPI as SPI
+import Adafruit_SSD1306
+
+from PIL import Image
+from PIL import ImageDraw
+from PIL import ImageFont
+
+import subprocess
+from subprocess import Popen, PIPE
+from datetime import timedelta
+
+DEFAULT_GPIO_RESET_PIN = 24
+
+class OLEDScreen(object):
+    def __init__(self, reset_pin=DEFAULT_GPIO_RESET_PIN):
+        self._disp = Adafruit_SSD1306.SSD1306_128_32(rst=reset_pin)
+        self._disp.begin()
+        self.clear()
+        self._img = Image.new('1', (self._disp.width, self._disp.height))
+        self._draw = ImageDraw.Draw(self._img)
+        self._font = ImageFont.load_default()
+
+    @property
+    def width(self):
+        return self._disp.width
+
+    @property
+    def height(self):
+        return self._disp.height
+
+    @property
+    def font(self):
+        return self._font
+
+    def clear(self):
+        self._disp.clear()
+        self._disp.display()
+
+    def draw(self):
+        return self._draw
+
+    def render(self):
+        self._disp.image(self._img)
+        self._disp.display()
+
+def uptime():
+    with open('/proc/uptime', 'r') as f:
+        uptime_seconds = int(float(f.readline().split()[0]))
+        uptime_string = str(timedelta(seconds = uptime_seconds))
+        if (uptime_seconds < 10*60*60):
+            uptime_string = '0'+uptime_string
+    return uptime_string
+
+if __name__ == '__main__':
+    reqd_s = set(['NetInfo', 'SysInfo', 'BME680', 'DS18S20', 'Soil'])
+    sensors = Sensors.Sensors()
+    s_list_s = set(sensors.list())
+
+    if not reqd_s.issubset(s_list_s):
+        raise Exception("Unable to find one or more required sensor!" +
+                "\n\tWanted: {}\n\tFound:  {}\n".format(reqd_s, s_list_s))
+    d = {}
+    def data_cb(val):
+        if 'data' not in val:
+            raise Exception("Bad message! {}".format(val))
+        val = json.loads(val['data'])
+        if val['type'] == Message.GENERAL:
+            d[val['source']] = val['value']
+        elif val['type'] == Message.SENSOR_GONE and val['source'] in d:
+            del d[val['source']]
+
+    subs = []
+    for s in reqd_s:
+        s = PSubscriber(s+"*")
+        s.add_subscriber(data_cb)
+        subs.append(s)
+
+    os = OLEDScreen()
+    osd = os.draw()
+
+    x = 0
+    top = -2
+    lastMark = mt.time()
+    tchar = ':'
+
+    while 1:
+        osd.rectangle((0,0,os.width,os.height), outline=0, fill=0)
+
+        L1 = 'No network data' if 'NetInfo' not in d else "{} {}".format(d['NetInfo']['interfaces']['wlan0']['addr'], d['NetInfo']['interfaces']['wlan0']['ssid'])
+        L2 = "{}F AMB, {:.1f}F CPU".format(d['DS18S20'], d['SysInfo']['cpuF']) if 'DS18S20' in d and 'SysInfo' in d else "No temperature data"
+        L3 = 'No environmental data' if not ('BME680' in d and 'Soil' in d) else 'VOC: {:.0f}K  Soil: {:.0f}'.format(d['BME680']['gas_resistance'] / 1000.0, d['Soil'])
+
+        tm = mt.localtime()
+        cm = mt.time()
+        if (cm - lastMark) > 1.0:
+            tchar = ' ' if tchar is ':' else ':'
+            lastMark = cm
+        L4 = "[{:02d}{}{:02d}{}{:02d}]   {}".format((tm.tm_hour%12), tchar, tm.tm_min, tchar, tm.tm_sec, "/: " +
+         ("{:.2f}%".format(100.0 - d['SysInfo']['fsFree%']['/']) if 'SysInfo' in d else '??.?%'))#uptime())
+
+    
+        osd.text((x, top), str(L1).strip(), font=os.font, fill=255)
+        osd.text((x, top+8), str(L2), font=os.font, fill=255)
+        osd.text((x, top+16), str(L3), font=os.font, fill=255)
+        osd.text((x, top+24), str(L4), font=os.font, fill=255)
+
+        os.render()
+
+        time.sleep(0.95)
+
+    for s in subs:
+        del s
