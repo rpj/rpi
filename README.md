@@ -3,15 +3,14 @@
 A [pub/sub](https://en.wikipedia.org/wiki/Publish–subscribe_pattern)-based implementation of a 
 Raspberry Pi system platform built on [redis](https://redis.io) and centered around sensors.
 
-The general philosophy is that a "sensor" is any "device" (physical or not) that is
-output-only in its primary mode of operation (i.e. configuration doesn't necessarily
-count as an "input").
+The general philosophy is that a "sensor" is any entity (physical or not) that operates primarily
+in an output-only mode (configuration doesn't necessarily count as an "input" so is allowable).
 
-These outputs are treated ephemerally, in a "fire and forget" manner, creating a "sensor data stream".
-The intent is for interested entities to subscribe to the sensor event stream and 
-transform/interpret/persist it according to their requirements.
+These outputs are treated ephemerally, in a "fire and forget" manner, creating a data stream.
+The intent is for interested entities to subscribe to the data stream and transform, interpret 
+and/or persist it according to their requirements.
 
-## Caveat emtpor
+## Caveat emptor
 
 This is still very much an active work-in-progress, however as it is functional, useful and "deployed" 
 (I use it in to run my "garden monitoring bots"), I figured it was worth making public in the event it
@@ -42,10 +41,10 @@ might help others in their projects.
 	* a loopback downsampler (set `-o` to the same as `-i`)
 	* a many-to-one reducer (set `-t` to `key`, lots of potential "TODO" here)
 * [sqlite-sink](bin/sqlite-sink): an [SQLite](https://www.sqlite.org) sink for data streams. examples:
-	* sink a downsampled sensor data stream into SQLite on a different host:
-		* on the source RPi device:
+	* sink to an SQLite database on a different host a downsampled data stream:
+		1. on the source device:
 			* `downsample -i redis://localhost -o redis://sql-db-host -r ... -p ...`
-		* on the sink host "`sql-db-host`":
+		2. on the sink host "`sql-db-host`":
 			* `sqlite-sink path-to-db.sqlite3`
 				* (lots of "TODOs" here, obviously) 
 * [oled-display](bin/oled-display): an OLED display driver for consuming & display some sensor data, among other things
@@ -59,6 +58,8 @@ might help others in their projects.
 * [RPJiOS-Web](https://github.com/rpj/rpjios-web): A [Flask](http://flask.pocoo.org/) web frontend currently deployed as [rpjios.com](http://rpjios.com) on [Heroku](http://heroku.com)
 	* Demonstrates the use of the `-t key` passthru mode of `downsample`, e.g.:
 		* `downsample -t 'key' -i 'redis://localhost' -o 'redis://REDACTED@ec2-REDACTED.compute-1.amazonaws.com:REDACTED' -p 'rpjios.sensors.*'`
+* [The old now-archived repository](https://github.com/rpj/rpi.archive) from whence this all came
+	* might still contain some useful stuff: D3-based "live" analog data plotting code in `rpjctrl`, and I'm still using `ledCount.py` on some of my units because I'm too lazy to re-write it properly
 
 ## License
 
