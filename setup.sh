@@ -2,8 +2,18 @@
 
 cat /etc/os-release | perl -ne "exit(1), if (/ID_LIKE=debian/)"
 if [ $? != 1 ]; then
-	echo "Looks like you're not on a Debian-like system, and I need 'apt'. Sorry."
+	echo "** Looks like you're not on a Debian-like system, and I need 'apt'. Sorry."
 	exit -1
+fi
+
+IS_RPI=1
+REQ_FILE=requirements.txt
+
+cat /etc/os-release | perl -ne "exit(1), if (/ID=raspbian/)"
+if [ $? != 1 ]; then
+	echo "* Looks like you're installing on a non-RPi platform; omitting unneeded modules."
+	IS_RPI=0
+	REQ_FILE=requirements-nonRPi.txt
 fi
 
 echo -n "* Checking for virtualenv: "
@@ -28,15 +38,17 @@ else
 	echo "OK"
 fi
 
-echo -n "* Checking for python-smbus: "
-apt list --installed 2> /dev/null | grep python-smbus > /dev/null
+if [ ${IS_RPI} == 1 ]; then
+	echo -n "* Checking for python-smbus: "
+	apt list --installed 2> /dev/null | grep python-smbus > /dev/null
 
-if [ $? == 1 ]; then
-	echo "NOT FOUND"
-	echo "* Trying to 'sudo apt -y install python-smbus':"
-	sudo apt -y install python-smbus
-else
-	echo "OK"
+	if [ $? == 1 ]; then
+		echo "NOT FOUND"
+		echo "* Trying to 'sudo apt -y install python-smbus':"
+		sudo apt -y install python-smbus
+	else
+		echo "OK"
+	fi
 fi
 
 if [ ! -d "./env" ]; then
@@ -54,8 +66,8 @@ if [ ! -L "env/lib/python2.7/site-packages/rpjios" ]; then
 	popd > /dev/null
 fi
 
-echo -n "* Installing required python modules: "
-pip install -r requirements.txt
+echo -n "* Installing required python modules from '${REQ_FILE}': "
+pip install -r ${REQ_FILE}
 
 if [ $? == 0 ]; then
 	echo ""
