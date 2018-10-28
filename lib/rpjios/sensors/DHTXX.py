@@ -18,5 +18,10 @@ class Factory(Sensor):
 
     def _runloop(self):
         h, t = dht.read_retry(self._var, self._pin)
+        # DHT11 can only detect humidity between 20-90%, so scale appropriately
+        scl_hum = lambda x: x if self._var != dht.DHT11 else (0.70 * (x - 100.0) + 90.0)
         if h and t:
-            self.publish({'tempF': (t*9/5.0+32), 'humidity%': h * (0.8 if self._var == dht.DHT11 else 1.0)})
+            pv = {'tempF': (t*9/5.0+32), 'humidity%': scl_hum(h), 'variant': 'DHT11' if self._var == dht.DHT11 else 'DHT22'}
+            if self._var == dht.DHT11:
+                pv['raw_humidity'] = h
+            self.publish(pv)
