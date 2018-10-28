@@ -47,7 +47,7 @@ might help others in their projects.
 		2. on the sink host "`sql-db-host`":
 			* `sqlite-sink path-to-db.sqlite3`
 				* (lots of "TODOs" here, obviously) 
-* [oled-display](bin/oled-display): an OLED display driver for consuming & display some sensor data, among other things
+* [oled-display](bin/oled-display): an [OLED display](https://www.adafruit.com/product/661) driver for consuming & display some sensor data, among other things
 
 ## Library
 
