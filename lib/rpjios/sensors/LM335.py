@@ -1,4 +1,5 @@
-from Base import Analog, SensorName, SensorDesc
+from Base import SensorName, SensorDesc
+from AnalogBase import Analog
 
 class Factory(Analog):
     @SensorName("LM335")
