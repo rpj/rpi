@@ -1,0 +1,77 @@
+{
+	"sensors": [
+		{ 
+			"name": "BME680", 
+			"disabled": true,
+			"config": { "frequency" : 0.5 }
+		},
+		{ 
+			"name": "DS18S20",
+			"disabled": true,
+	       		"config": {
+				"devpath": "/sys/bus/w1/devices/10-00080347f4aa/w1_slave",
+				"frequency": 0.5
+			}
+		},
+		{ 
+			"name": "NetInfo", 
+			"disabled": false,
+			"config": { "frequency": 0.1 }	
+		},
+		{ 
+			"name": "SysInfo",
+			"disabled": false,
+			"config": {
+				"frequency": 0.2
+			}
+		},
+		{ 
+			"name": "TEPT5700",
+			"disabled": true,
+			"config": {
+				"adc_input": 1,
+				"frequency": 1
+			}
+		},
+		{
+			"name": "LM335",
+			"disabled": true,
+			"config": {
+				"adc_input": 2,
+				"frequency": 0.2,
+				"meta": {
+					"THIS": "is a free-form data structure you can put anything in",
+					"IfYouDo": "it will be included in the metadata of the sensor with key 'config_meta'"
+				}
+			}
+		},
+		{
+			"name": "LM335",
+			"disabled": true,
+			"config": {
+				"adc_input": 3,
+				"frequency": 0.2,
+				"name_append": "A",
+				"location": "Rows7-9"
+			}
+		},
+		{
+			"name": "Soil",
+			"disabled": true,
+			"config": {
+				"adc_input": 7,
+				"frequency": 0.2,
+				"location": "Desk plant"
+			}
+		},
+		{
+			"name": "DHTXX",
+			"disabled": false,
+			"config": {
+				"data_pin": 23,
+				"variant": 11,
+				"frequency": 0.2
+			}
+		}
+	]
+}

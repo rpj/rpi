@@ -14,9 +14,9 @@ class Factory(Sensor):
         super(Factory, self).__init__(*args, **kwargs)
         self._meta['dht_config'] = {'pin': data_pin, 'variant': variant}
         self._pin = data_pin
-        self._var = dht.DHT11 if variant == 1 else dht.DHT22 
+        self._var = dht.DHT11 if variant == 11 else dht.DHT22 
 
     def _runloop(self):
         h, t = dht.read_retry(self._var, self._pin)
         if h and t:
-            self.publish({'tempF': (t*9/5.0+32), 'humidity%': h})
+            self.publish({'tempF': (t*9/5.0+32), 'humidity%': h * (0.8 if self._var == dht.DHT11 else 1.0)})
