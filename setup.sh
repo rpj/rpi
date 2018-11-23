@@ -1,5 +1,44 @@
 #!/bin/bash
 
+check_and_install() {
+	HOW=$1
+	PKGNAME=$2
+	ALTAPTNAME=$3
+
+	echo -n "* Looking for ${PKGNAME}: "
+	if [ $HOW == "which" ]; then
+		which "${PKGNAME}" > /dev/null
+	elif [[ $HOW == "pkgcfg" || $HOW == "pkg-config" ]]; then
+		pkg-config --exists "${PKGNAME}" > /dev/null
+	elif [[ $HOW == "apt" || $HOW == "apt-list" ]]; then
+		apt list --installed 2> /dev/null | grep "${PKGNAME}" > /dev/null
+	fi
+
+	if [ $? == 1 ]; then
+		echo "NOT FOUND"
+		_N=$ALTAPTNAME
+		if [ -z "$_N" ]; then
+			_N=$PKGNAME
+		fi
+		echo "* Trying to install '${_N}..."
+		sudo apt -y install ${_N}
+	else
+		echo "found"
+	fi
+}
+
+link_local_py_lib() {
+	LIBDIR=$1
+
+	echo "* Linking local Python library '${LIBDIR}'"
+	if [ ! -L "env/lib/python2.7/site-packages/${LIBDIR}" ]; then
+		pushd "env/lib/python2.7/site-packages/" > /dev/null
+		ln -s "../../../../${LIBDIR}"
+		popd > /dev/null
+	fi
+}
+
+
 cat /etc/os-release | perl -ne "exit(1), if (/ID_LIKE=debian/)"
 if [ $? != 1 ]; then
 	echo "** Looks like you're not on a Debian-like system, and I need 'apt'. Sorry."
@@ -16,39 +55,12 @@ if [ $? != 1 ]; then
 	REQ_FILE=requirements-nonRPi.txt
 fi
 
-echo -n "* Checking for virtualenv: "
-which virtualenv > /dev/null
-
-if [ $? == 1 ]; then
-	echo "NOT FOUND"
-	echo "* Trying to 'sudo apt -y install virtualenv':"
-	sudo apt -y install virtualenv
-else
-	echo "OK"
-fi
-
-echo -n "* Checking for redis: "
-which redis-server > /dev/null
-
-if [ $? == 1 ]; then
-	echo "NOT FOUND"
-	echo "* Trying to 'sudo apt -y install redis':"
-	sudo apt -y install redis
-else
-	echo "OK"
-fi
+check_and_install "which" "virtualenv"
+check_and_install "which" "redis-server" "redis"
+check_and_install "apt" "python-dev"
 
 if [ ${IS_RPI} == 1 ]; then
-	echo -n "* Checking for python-smbus: "
-	apt list --installed 2> /dev/null | grep python-smbus > /dev/null
-
-	if [ $? == 1 ]; then
-		echo "NOT FOUND"
-		echo "* Trying to 'sudo apt -y install python-smbus':"
-		sudo apt -y install python-smbus
-	else
-		echo "OK"
-	fi
+	check_and_install "apt" "python-smbus"
 fi
 
 if [ ! -d "./env" ]; then
@@ -56,15 +68,9 @@ if [ ! -d "./env" ]; then
 	virtualenv --system-site-packages --prompt="(rpjios virtualenv) " ./env
 fi
 
-echo "* Activating virtualenv"
 source env/bin/activate
 
-echo "* Linking lib/rpjios"
-if [ ! -L "env/lib/python2.7/site-packages/rpjios" ]; then
-	pushd "env/lib/python2.7/site-packages/" > /dev/null
-	ln -s "../../../../lib/rpjios"
-	popd > /dev/null
-fi
+link_local_py_lib "lib/rpjios"
 
 echo -n "* Installing required python modules from '${REQ_FILE}': "
 pip install -r ${REQ_FILE}
