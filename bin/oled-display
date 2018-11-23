@@ -96,8 +96,11 @@ if __name__ == '__main__':
         osd.rectangle((0,0,os.width,os.height), outline=0, fill=0)
 
         L1 = 'No network data' if 'NetInfo' not in d else "{} {}".format(d['NetInfo']['interfaces']['wlan0']['addr'], d['NetInfo']['interfaces']['wlan0']['ssid'])
-        L2 = "{}F AMB, {:.1f}F CPU".format(d['DS18S20'], d['SysInfo']['cpuF']) if 'DS18S20' in d and 'SysInfo' in d else "No temperature data"
-        L3 = 'No environmental data' if not ('BME680' in d and 'Soil' in d) else 'VOC: {:.0f}K  Soil: {:.0f}'.format(d['BME680']['gas_resistance'] / 1000.0, d['Soil'])
+        L2 = 'Soil: {:.0f}'.format(d['Soil']) if 'Soil' in d else "No soil data"
+        #L2 = "{:.1f}F AMB, {:.0f}F CPU".format(d['BME680']['temperature'], d['SysInfo']['cpuF']) if 'BME680' in d and 'SysInfo' in d else "No temperature data"
+        #L3 = 'No environmental data' if not ('BME680' in d and 'Soil' in d) else 'VOC: {:.0f}K  Soil: {:.0f}'.format(d['BME680']['gas_resistance'] / 1000.0, d['Soil'])
+        #L3 = 'No environmental data' if not 'BME680' in d else 'AQ,BP: {:.0f}K, {:.1f}'.format(d['BME680']['gas_resistance'] / 1000.0, d['BME680']['pressure'])
+        L3 = ""
 
         tm = mt.localtime()
         cm = mt.time()
@@ -105,7 +108,7 @@ if __name__ == '__main__':
             tchar = ' ' if tchar is ':' else ':'
             lastMark = cm
         L4 = "[{:02d}{}{:02d}{}{:02d}]   {}".format((tm.tm_hour%12), tchar, tm.tm_min, tchar, tm.tm_sec, "/: " +
-         ("{:.2f}%".format(100.0 - d['SysInfo']['fsFree%']['/']) if 'SysInfo' in d else '??.?%'))#uptime())
+         ("{:.1f}%".format(100.0 - d['SysInfo']['fsFree%']['/']) if 'SysInfo' in d else '??.?%'))#uptime())
 
     
         osd.text((x, top), str(L1).strip(), font=os.font, fill=255)
