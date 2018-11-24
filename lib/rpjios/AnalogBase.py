@@ -1,10 +1,10 @@
-from Base import Sensor
+from rpjios.SensorBase import Sensor
 import Adafruit_GPIO.SPI as SPI
 import Adafruit_MCP3008 as MCP
 
 class Analog(Sensor):
     def __init__(self, port=0, device=0, bitwidth=10, adc_input=None, debounce=3, *args, **kwargs):
-        if not adc_input:
+        if adc_input is None or adc_input < 0 or adc_input > 7:
             raise SensorException("Unspecified ADC input number for {}".format(self))
         super(Analog, self).__init__(*args, **kwargs)
         self.bitwidth = bitwidth

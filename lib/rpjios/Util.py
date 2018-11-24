@@ -3,6 +3,7 @@ import re
 import os
 import sys
 import psutil
+import socket
 from datetime import timedelta
 from subprocess import Popen, PIPE
 
@@ -78,4 +79,16 @@ def network_ifaces():
                 for k in wf:
                     rv[n][k] = wf[k]
     return rv
+
+HOSTNAME = None
+_HOSTNAME_FILE = '/etc/hostname'
+def hostname():
+    global HOSTNAME
+    if HOSTNAME == None:
+        if os.path.exists(_HOSTNAME_FILE):
+            with open(_HOSTNAME_FILE, 'r') as hnf:
+                HOSTNAME = hnf.read().strip()
+        else:
+            HOSTNAME = socket.gethostname()
+    return HOSTNAME
 

@@ -1,0 +1,9 @@
+{
+	"BME680": {
+		"gas_resistance": "air_quality",
+		"status": false,
+		"gas_index": false,
+		"meas_index": false,
+		"heat_stable": false
+	}
+}

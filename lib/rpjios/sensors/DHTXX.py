@@ -1,4 +1,4 @@
-from Base import Sensor, SensorName, SensorDesc
+from rpjios.SensorBase import Sensor, SensorName, SensorDesc
 import Adafruit_DHT as dht
 
 class Factory(Sensor):

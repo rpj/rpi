@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import sys
 import json
 import time
@@ -7,11 +8,35 @@ import redis
 import Queue
 import getopt
 import threading
-from rpjios.Util import parse_redis_url
+from monotonic import time as mttime
+from rpjios.Util import parse_redis_url, hostname
+from rpjios.Types import Constants
 
 def inject_custom_opts(r_opts):
     r_opts['socket_connect_timeout'] = 10.0
     return r_opts
+
+def parseOptOpts(optstr):
+    optName = None
+    opts = None
+    if optstr != None:
+        optSplit = optstr.split(":")
+        optName = optSplit[0]
+
+        if len(optSplit) == 2:
+            opts = {k: val for k, val in map(lambda x: x.split('='), optSplit[1].split(','))}
+
+            for k in opts:
+                if os.path.exists(opts[k]):
+                    opts[k] = json.load(open(opts[k], 'r'))
+
+    return (optName, opts)
+
+def printOptOpts(opts):
+    if opts:
+        print " Options:"
+        for (k, v) in opts.items():
+            print "  '{}' = {} ({})".format(k, v, type(v))
 
 if __name__ == "__main__":
     ops, args = getopt.getopt(sys.argv[1:], 'di:o:m:r:p:t:')
@@ -34,18 +59,41 @@ if __name__ == "__main__":
     o_r = redis.StrictRedis(**inject_custom_opts(o_urip))
 
     s_r = int(o_d['r']) if 'r' in o_d else 10
-    md = o_d['m'] if 'm' in o_d else None
-    mt = o_d['t'] if 't' in o_d else None
+    (mode, modeOpts) = parseOptOpts(o_d['m']) if 'm' in o_d else (None, None)
+    (ptMode, ptOpts) = parseOptOpts(o_d['t']) if 't' in o_d else (None, None)
+
+    if ptMode == 'list':
+        if not ptOpts:
+            ptOpts = {}
+        ptOpts['suffix'] = ptOpts['suffix'] if 'suffix' in ptOpts else "__list"
+        ptOpts['limit'] = int(ptOpts['limit']) if 'limit' in ptOpts else 10
+
     print "Input:   {}".format(o_d['i'])
     print "Output:  {}".format(o_d['o'])
     print "Pattern: {}".format(o_d['p'])
     print "Rate:    {}".format(s_r)
-    print "Mode:    {}".format(md)
-    print "P-thru:  {}".format(mt)
+    print "P-thru:  {}".format(ptMode)
+    printOptOpts(ptOpts)
+    print "Mode:    {}".format(mode)
+    printOptOpts(modeOpts)
+
+    _sep = Constants.NAMESPACE_SEP
 
     s_d = {}
     i_ps = i_r.pubsub()
     i_ps.psubscribe(o_d['p'])
+
+    sendQueue = Queue.Queue()
+    def sendThread():
+        while 1:
+            nextMsg = sendQueue.get()
+            prevFwd = nextMsg['data']['__ds'] if nextMsg['data'].has_key('__ds') else None
+            nextMsg['data']['__ds'] = {"ts": mttime.time(), "host": hostname(), "prev": prevFwd, "rate": s_r}
+            nextMsg['send_func'](nextMsg['channel'], json.dumps(nextMsg['data']))
+
+    sendThreadInst = threading.Thread(target=sendThread)
+    sendThreadInst.daemon = True
+    sendThreadInst.start()
 
     for m in i_ps.listen():
         try:
@@ -56,43 +104,69 @@ if __name__ == "__main__":
                 if 'subscribe' in m['type']:
                     continue
 
-                _c = m['channel']
-                _d = m['data']
-                _d_d = json.loads(_d)
+                _d_d = json.loads(m['data'])
 
                 if _d_d['type'] == 'AVAILABLE':
                     continue
 
-                _first = False
-                if _c not in s_d:
-                    _first = True
-                    s_d[_c] = []
+                _c = m['channel']
+                chanElements = _c.split(_sep)
+                sourceName = chanElements[-1]
+                forwardMsgs = {_c: _d_d}
 
-                s_d[_c].append(_d)
-                if 'd' in o_d:
-                    print ">>> s_d:"
-                    for k in s_d:
-                        print ">>>\t{}: {}".format(k, len(s_d[k]))
+                if mode == "flatten" and type(_d_d["value"]) is dict:
+                    forwardMsgs = {}
+                    sufMap = modeOpts["mapping"][sourceName] if modeOpts.has_key("mapping") and modeOpts["mapping"].has_key(sourceName) else {}
 
-                # TODO: queue up sends for a different thread so as not to miss
-                # any messages that come in from the .listen() call!
-                if len(s_d[_c]) == s_r or _first:
-                    if md == 'avg':
-                        # TODO: _d = avg
-                        pass
+                    for (key, val) in _d_d["value"].iteritems():
+                        chanSuffix = sufMap[key] if sufMap.has_key(key) else key
 
-                    if not mt:
+                        if type(chanSuffix) is bool and chanSuffix == False:
+                            continue
+
+                        newChan = _sep.join(list(chanElements) + [chanSuffix])
+                        newMsg = dict(_d_d)
+                        newMsg["source"] = newChan
+                        newMsg["value"] = val
+                        forwardMsgs[newChan] = newMsg
+
+                    if modeOpts.has_key("include-raw"):
+                        newChan = _sep.join(list(chanElements) + ["__raw"])
+                        _d_d["source"] = newChan
+                        forwardMsgs[newChan] = dict(_d_d)
+
+                for (key, val) in forwardMsgs.iteritems():
+                    if key not in s_d:
+                        s_d[key] = []
+
+                    s_d[key].append(val)
+
+                    if len(s_d[key]) == s_r:
+                        sendFunc = o_r.publish
+
+                        if ptMode == 'key':
+                            sendFunc = o_r.set
+                        elif ptMode == 'list':
+                            def listSendFunc(ch, msg):
+                                omsg = json.loads(msg)
+                                lname = _sep.join([ch, ptOpts['suffix']])
+                                rpipe = o_r.pipeline(True)
+                                if rpipe.lpush(lname, [omsg['ts'], omsg['value']]) > ptOpts['limit']:
+                                    rpipe.ltrim(lname, 0, ptOpts['limit'] - 1)
+                                rpipe.execute()
+                            sendFunc = listSendFunc
+
+                        sendQueue.put({
+                            'send_func': sendFunc,
+                            'channel': key,
+                            'data': val
+                        })
+
                         if 'd' in o_d:
-                            print ">>> PUB {} {}".format(_c, _d)
-                        o_r.publish(_c, _d)
-                    elif mt == 'key':
-                        _kn = '.'.join(_c.split('.')[:-1])
-                        if 'd' in o_d:
-                            print ">>> SET {} {}".format(_kn, _d)
-                        if not o_r.set(_kn, _d):
-                            raise Exception("key set! {} {}".format(_kn, _d))
+                            print "After 'put', queue has ~{} elements".format(sendQueue.qsize())
 
-                    del s_d[_c]
-                    s_d[_c] = []
+                        del s_d[key]
+                        s_d[key] = []
+
         except Exception as e:
             print "Error: {}".format(e)

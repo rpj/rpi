@@ -1,11 +1,12 @@
 import re
 import os
 import psutil
-from Base import Sensor, SensorName, SensorDesc
+from rpjios.SensorBase import Sensor, SensorName, SensorDesc, SensorCategory
 from subprocess import Popen, PIPE
 
 class Factory(Sensor):
-    @SensorName("NetInfo")
+    @SensorName("Net")
+    @SensorCategory("info")
     @SensorDesc("Network information")
     def __init__(self, *args, **kwargs):
         super(Factory, self).__init__(*args, **kwargs)
