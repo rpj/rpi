@@ -60,7 +60,7 @@ The following are currently supported (with the required drivers / interfaces se
 * [DS18S20](https://datasheets.maximintegrated.com/en/ds/DS18S20.pdf) high-precision 1-wire temperature sensor. [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/DS18S20.py)
 * [LM335](http://www.ti.com/lit/ds/symlink/lm335.pdf) precision analog temperature sensor. [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/LM335.py)
 * Capacative soil moisture sensors such as the DFRobot [SEN0114](https://www.dfrobot.com/product-599.html) or any [simple-to-build capactive analog moisture sensor](http://gardenbot.org/howTo/soilMoisture/). [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/Soil.py)
-* [TEPT5700](https://www.vishay.com/docs/81321/tept5700.pdf) ambient light sensor.
+* [TEPT5700](https://www.vishay.com/docs/81321/tept5700.pdf) ambient light sensor. [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/TEPT5700.py)
 
 Variants of these sensors could likely be made to work with this system via simple modifications if any are required at all.
 
