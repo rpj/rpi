@@ -147,13 +147,17 @@ if __name__ == "__main__":
                         if ptMode == 'key':
                             sendFunc = o_r.set
                         elif ptMode == 'list':
+                            # this sends outside of the sendThread! that's bad!
                             def listSendFunc(ch, msg):
                                 omsg = json.loads(msg)
                                 lname = _sep.join([ch, ptOpts['suffix']])
                                 rpipe = o_r.pipeline(True)
                                 if rpipe.lpush(lname, [omsg['ts'], omsg['value']]) > ptOpts['limit']:
                                     rpipe.ltrim(lname, 0, ptOpts['limit'] - 1)
-                                rpipe.execute()
+                                try:
+                                    rpipe.execute()
+                                except e:
+                                    print "listSendFunc() pipe execution failure: {}".format(e)
                             sendFunc = listSendFunc
 
                         sendQueue.put({
