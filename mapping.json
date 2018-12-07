@@ -9,6 +9,6 @@
 	"DHTXX": {
 		"variant": false,
 		"humidity%": "relative_humidity",
-		"tempF": "temperature_farenheit"
+		"tempF": "temperature_fahrenheit"
 	}
 }
