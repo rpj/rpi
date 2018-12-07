@@ -5,5 +5,10 @@
 		"gas_index": false,
 		"meas_index": false,
 		"heat_stable": false
+	},
+	"DHTXX": {
+		"variant": false,
+		"humidity%": "relative_humidity",
+		"tempF": "temperature_farenheit"
 	}
 }
