@@ -1,7 +1,7 @@
 import os
 import psutil
 from datetime import timedelta
-from Base import Sensor, SensorName, SensorDesc
+from rpjios.SensorBase import Sensor, SensorName, SensorDesc, SensorCategory
 
 def cpuTemp():
     with open('/sys/class/thermal/thermal_zone0/temp') as f:
@@ -16,7 +16,8 @@ def uptime():
     return uptime_string
 
 class Factory(Sensor):
-    @SensorName("SysInfo")
+    @SensorName("Sys")
+    @SensorCategory("info")
     @SensorDesc("Local system information")
     def __init__(self, *args, **kwargs):
         if 'frequency' not in kwargs:

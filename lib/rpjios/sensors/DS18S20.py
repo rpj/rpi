@@ -1,4 +1,4 @@
-from Base import Sensor, SensorName, SensorDesc
+from rpjios.SensorBase import Sensor, SensorName, SensorDesc
 
 class Factory(Sensor):
     @SensorName("DS18S20")

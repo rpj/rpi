@@ -51,7 +51,20 @@ might help others in their projects.
 
 ## Library
 
-(TODO)
+### Sensors & Devices
+
+The following are currently supported (with the required drivers / interfaces setup of course):
+
+* [BME680](https://cdn-shop.adafruit.com/product-files/3660/BME680.pdf) temperature / humidity / barometeric pressure / volatic organic compound sensor. My setup uses [AdaFruit's awesome breakout board](https://www.adafruit.com/product/3660) for ease-of-integration. [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/BME680.py)
+* [DHTXX](https://www.mouser.com/ds/2/737/dht-932870.pdf)(DHT11/DHT22) temperature / humidity sensors. I use [DFRobot's](https://www.dfrobot.com/product-1102.html) [breakouts](https://www.dfrobot.com/product-174.html) but you can find similar breakout's from many (re)sellers online. [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/DHTXX.py)
+* [DS18S20](https://datasheets.maximintegrated.com/en/ds/DS18S20.pdf) high-precision 1-wire temperature sensor. [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/DS18S20.py)
+* [LM335](http://www.ti.com/lit/ds/symlink/lm335.pdf) precision analog temperature sensor. [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/LM335.py)
+* Capacative soil moisture sensors such as the DFRobot [SEN0114](https://www.dfrobot.com/product-599.html) or any [simple-to-build capactive analog moisture sensor](http://gardenbot.org/howTo/soilMoisture/). [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/Soil.py)
+* [TEPT5700](https://www.vishay.com/docs/81321/tept5700.pdf) ambient light sensor. [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/TEPT5700.py)
+
+Variants of these sensors could likely be made to work with this system via simple modifications if any are required at all.
+
+Additionally, a simple Python driver for the [74HC595](http://www.ti.com/lit/ds/symlink/sn74hc595.pdf) 8-bit shift register is included [here](https://github.com/rpj/rpi/blob/master/lib/rpjios/devices/74HC595.py).
 
 ## Related
 

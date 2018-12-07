@@ -4,7 +4,8 @@ import signal
 import time
 import json
 from rpjios import Sensors
-from rpjios.sensors.Base import Message, Subscriber
+from rpjios.SubscriberBase import Subscriber
+from rpjios.Types import Message
 
 RUNNING = True
 

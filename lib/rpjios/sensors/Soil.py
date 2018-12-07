@@ -1,5 +1,5 @@
-from Base import SensorName, SensorDesc
-from AnalogBase import Analog
+from rpjios.SensorBase import SensorName, SensorDesc 
+from rpjios.AnalogBase import Analog
 
 class Factory(Analog):
     @SensorName("Soil")

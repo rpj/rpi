@@ -6,7 +6,8 @@ import time
 import json
 import Queue
 import sqlite3
-from rpjios.sensors.Base import PSubscriber, Message
+from rpjios.SubscriberBase import PSubscriber
+from rpjios.Types import Message
 
 SQLITE_DEFAULT_PATH = '/home/pi/rpjios-sensors.sqlite3'
 
@@ -22,8 +23,8 @@ if __name__ == '__main__':
 
     cur = sqconn.cursor()
 
-    cur.execute("CREATE TABLE data (id integer primary key, source text, time real, uuid text, value text)")
-    cur.execute("CREATE TABLE status (id integer primary key, source text, time real, uuid text, status text)")
+    cur.execute("CREATE TABLE data (id integer primary key, source text, time real, value text)")
+    cur.execute("CREATE TABLE status (id integer primary key, source text, time real, status text)")
     sqconn.commit()
 
     msg_q = Queue.Queue()
@@ -46,11 +47,11 @@ if __name__ == '__main__':
             try:
                 c = sqconn.cursor()
                 if val['type'] == Message.GENERAL:
-                    arg = (val['source'], val['ts'], val['id'], json.dumps(val['value']))
-                    c.execute("INSERT INTO data VALUES(NULL, ?, ?, ?, ?)", arg)
+                    arg = (val['source'], val['ts'], json.dumps(val['value']))
+                    c.execute("INSERT INTO data VALUES(NULL, ?, ?, ?)", arg)
                 else:
-                    arg = (val['source'], val['ts'], val['id'], val['type'])
-                    c.execute("INSERT INTO status VALUES(NULL, ?, ?, ?, ?)", arg)
+                    arg = (val['source'], val['ts'], val['type'])
+                    c.execute("INSERT INTO status VALUES(NULL, ?, ?, ?)", arg)
 
                 sqconn.commit()
                 committed = True
