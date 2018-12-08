@@ -65,8 +65,8 @@ if __name__ == "__main__":
     if ptMode == 'list':
         if not ptOpts:
             ptOpts = {}
-        ptOpts['suffix'] = ptOpts['suffix'] if 'suffix' in ptOpts else "__list"
-        ptOpts['limit'] = int(ptOpts['limit']) if 'limit' in ptOpts else 10
+        ptOpts['suffix'] = ptOpts['suffix'] if 'suffix' in ptOpts else ".list"
+        ptOpts['limit'] = int(ptOpts['limit']) if 'limit' in ptOpts else 1000
 
     print "Input:   {}".format(o_d['i'])
     print "Output:  {}".format(o_d['o'])
@@ -131,7 +131,7 @@ if __name__ == "__main__":
                         forwardMsgs[newChan] = newMsg
 
                     if modeOpts.has_key("include-raw"):
-                        newChan = _sep.join(list(chanElements) + ["__raw"])
+                        newChan = _sep.join(list(chanElements) + [".raw"])
                         _d_d["source"] = newChan
                         forwardMsgs[newChan] = dict(_d_d)
 
