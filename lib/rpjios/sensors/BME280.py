@@ -23,6 +23,8 @@ class Factory(Sensor):
 
     def _runloop(self):
         data = self._attrs_to_dict(bme280.sample(self._bus, self._addr, self._cbdata))
+        if 'temperature' in data:
+            data['temperature'] = (data['temperature'] * 1.8) + 32.0
         if 'timestamp' in data and type(data['timestamp']) == datetime:
             data['timestamp'] = time.mktime(data['timestamp'].timetuple())
         if 'id' in data:
