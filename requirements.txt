@@ -12,4 +12,6 @@ monotonic==1.5
 psutil==5.4.7
 redis==2.10.5
 RPi.GPIO==0.6.3
+RPi.bme280>=0.2.2
+smbus2>=0.2.1
 spidev>=3.2

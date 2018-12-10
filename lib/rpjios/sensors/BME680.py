@@ -5,7 +5,7 @@ from rpjios.SensorBase import Sensor, SensorName, SensorDesc
 
 class Factory(Sensor):
     @SensorName("BME680")
-    @SensorDesc("Bosch low power gas, pressure, temperature & humidity sensor")
+    @SensorDesc("Bosch I2C low power gas, pressure, temperature & humidity sensor")
     def __init__(self, *args, **kwargs):
         super(Factory, self).__init__(*args, **kwargs)
 
