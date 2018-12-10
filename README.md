@@ -55,7 +55,8 @@ might help others in their projects.
 
 The following are currently supported (with the required drivers / interfaces setup of course):
 
-* [BME680](https://cdn-shop.adafruit.com/product-files/3660/BME680.pdf) temperature / humidity / barometeric pressure / volatic organic compound sensor. My setup uses [AdaFruit's awesome breakout board](https://www.adafruit.com/product/3660) for ease-of-integration. [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/BME680.py)
+* [BME680](https://cdn-shop.adafruit.com/product-files/3660/BME680.pdf) temperature / humidity / barometeric pressure / volatic organic compound I2C sensor. My setup uses [AdaFruit's awesome breakout board](https://www.adafruit.com/product/3660) for ease-of-integration. [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/BME680.py)
+* [BME280](https://www.bosch-sensortec.com/bst/products/all_products/bme280) temperature / humidity / barometeric pressure I2C sensor. [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/BME280.py)
 * [DHTXX](https://www.mouser.com/ds/2/737/dht-932870.pdf)(DHT11/DHT22) temperature / humidity sensors. I use [DFRobot's](https://www.dfrobot.com/product-1102.html) [breakouts](https://www.dfrobot.com/product-174.html) but you can find similar breakout's from many (re)sellers online. [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/DHTXX.py)
 * [DS18S20](https://datasheets.maximintegrated.com/en/ds/DS18S20.pdf) high-precision 1-wire temperature sensor. [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/DS18S20.py)
 * [LM335](http://www.ti.com/lit/ds/symlink/lm335.pdf) precision analog temperature sensor. [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/LM335.py)
