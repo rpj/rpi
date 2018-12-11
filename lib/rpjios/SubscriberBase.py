@@ -76,13 +76,11 @@ class Subscriber(RedisBase.Redis):
                 pass
 
         self._subs.append(listener)
+        return self
 
     def add_subscriber(self, l):
         return self.add_listener(l)
 
-# This class will always prepend the pattern given with Sensor.CHANNEL,
-# so as not to be a generic pattern subscriber but instead scoped to
-# this "Sensor" namespace
 class PSubscriber(Subscriber):
     def __init__(self, *args, **kwargs):
         super(PSubscriber, self).__init__(*args, **kwargs)

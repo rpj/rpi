@@ -3,9 +3,13 @@
 import sys
 import time
 import json
-from rpjios import Sensors
-from rpjios.sensors.Base import PSubscriber, Message
+import threading
+from Queue import Queue
+from collections import deque
 from monotonic import time as mt
+
+from rpjios import Util
+from rpjios.SubscriberBase import PSubscriber
 
 import Adafruit_GPIO.SPI as SPI
 import Adafruit_SSD1306
@@ -52,6 +56,52 @@ class OLEDScreen(object):
         self._disp.image(self._img)
         self._disp.display()
 
+class OLEDSubscriber(object):
+    def __init__(self):
+        self._hn = Util.hostname()
+        self._q = Queue()
+        self._counts = {'hosts':{},'total':0}
+        self._stats = {'mps':deque(maxlen=10)}
+        self._run = True
+        self._psub = PSubscriber("*").add_listener(lambda x: self._q.put(x))
+
+        self._statthread = threading.Thread(target=self._statthreadfunc)
+        self._statthread.daemon = True
+        self._subthread = threading.Thread(target=self._subthreadfunc)
+        self._subthread.daemon = True
+
+        self._statthread.start()
+        self._subthread.start()
+
+    def __del__(self):
+        self._run = False
+        self._subthread.join()
+        self._statthreadfunc.join()
+
+    @property
+    def statistics(self):
+        mpsl = list(self._stats['mps'])
+        return {'messages_per_second': float(sum(mpsl)) / float(len(mpsl)), 'counts': self._counts}
+
+    def _statthreadfunc(self):
+        _lc = 0
+        while self._run:
+            _s = mt.time()
+            _cc = self._counts['total']
+            if _cc > 0:
+                self._stats['mps'].append(_cc - _lc)
+                _lc = _cc
+            time.sleep(1.0 - (mt.time() - _s))
+
+    def _subthreadfunc(self):
+        while self._run:
+            msg = self._q.get()
+            (host, mtype, ename) = msg["channel"].split(':')
+            print "{} {} {}".format(host, mtype, ename)
+
+            self._counts['hosts'][host] = 0 if host not in self._counts['hosts'] else (self._counts['hosts'][host] + 1)
+            self._counts['total'] += 1
+
 def uptime():
     with open('/proc/uptime', 'r') as f:
         uptime_seconds = int(float(f.readline().split()[0]))
@@ -61,29 +111,7 @@ def uptime():
     return uptime_string
 
 if __name__ == '__main__':
-    reqd_s = set(['NetInfo', 'SysInfo', 'BME680', 'DS18S20', 'Soil'])
-    sensors = Sensors.Sensors()
-    s_list_s = set(sensors.list())
-
-    if not reqd_s.issubset(s_list_s):
-        raise Exception("Unable to find one or more required sensor!" +
-                "\n\tWanted: {}\n\tFound:  {}\n".format(reqd_s, s_list_s))
     d = {}
-    def data_cb(val):
-        if 'data' not in val:
-            raise Exception("Bad message! {}".format(val))
-        val = json.loads(val['data'])
-        if val['type'] == Message.GENERAL:
-            d[val['source']] = val['value']
-        elif val['type'] == Message.SENSOR_GONE and val['source'] in d:
-            del d[val['source']]
-
-    subs = []
-    for s in reqd_s:
-        s = PSubscriber(s+"*")
-        s.add_subscriber(data_cb)
-        subs.append(s)
-
     os = OLEDScreen()
     osd = os.draw()
 
@@ -91,6 +119,8 @@ if __name__ == '__main__':
     top = -2
     lastMark = mt.time()
     tchar = ':'
+
+    ols = OLEDSubscriber()
 
     while 1:
         osd.rectangle((0,0,os.width,os.height), outline=0, fill=0)
@@ -119,6 +149,7 @@ if __name__ == '__main__':
         os.render()
 
         time.sleep(0.95)
+        print "STATS!  {}".format(ols.statistics)
 
     for s in subs:
         del s
