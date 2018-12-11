@@ -7,6 +7,7 @@ import threading
 from Queue import Queue
 from collections import deque
 from monotonic import time as mt
+from datetime import timedelta
 
 from rpjios import Util
 from rpjios.SubscriberBase import PSubscriber
@@ -17,10 +18,6 @@ import Adafruit_SSD1306
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
-
-import subprocess
-from subprocess import Popen, PIPE
-from datetime import timedelta
 
 DEFAULT_GPIO_RESET_PIN = 24
 
@@ -61,7 +58,7 @@ class OLEDSubscriber(object):
         self._hn = Util.hostname()
         self._q = Queue()
         self._counts = {'hosts':{},'total':0}
-        self._stats = {'mps':deque(maxlen=10)}
+        self._stats = {'mps':deque(maxlen=30)}
         self._run = True
         self._psub = PSubscriber("*").add_listener(lambda x: self._q.put(x))
 
@@ -81,10 +78,20 @@ class OLEDSubscriber(object):
     @property
     def statistics(self):
         mpsl = list(self._stats['mps'])
-        return {'messages_per_second': float(sum(mpsl)) / float(len(mpsl)), 'counts': self._counts}
+        return {'per_second': (float(sum(mpsl)) / float(len(mpsl)) if len(mpsl) > 0 else 0), 
+                'counts': self._counts }
+
+    @property
+    def local_interest(self):
+        return {k: 0.0 if not len(v) else (float(sum(v)) / float(len(v))) for (k, v) in self._local_interest.items()}
+
+    @local_interest.setter
+    def local_interest(self, li_list):
+        self._local_interest = {k: deque(maxlen=30) for k in li_list}
 
     def _statthreadfunc(self):
         _lc = 0
+        _lb = 0
         while self._run:
             _s = mt.time()
             _cc = self._counts['total']
@@ -94,21 +101,39 @@ class OLEDSubscriber(object):
             time.sleep(1.0 - (mt.time() - _s))
 
     def _subthreadfunc(self):
+        def _tvik(tree, key):
+            chk_f = (lambda l_key, l_tree: reduce(lambda b, kx: b + (kx if kx.startswith(l_key) else ""), l_tree.keys(), ""))
+
+            if type(tree) is dict:
+                chk_v = chk_f(key, tree)
+                if not bool(chk_v):
+                    for k in tree.iterkeys():
+                        tmp = _tvik(tree[k], key)
+                        if tmp is not None:
+                            return tmp
+                else:
+                    return tree[chk_v]
+            return None
+
         while self._run:
             msg = self._q.get()
             (host, mtype, ename) = msg["channel"].split(':')
-            print "{} {} {}".format(host, mtype, ename)
 
             self._counts['hosts'][host] = 0 if host not in self._counts['hosts'] else (self._counts['hosts'][host] + 1)
             self._counts['total'] += 1
 
-def uptime():
-    with open('/proc/uptime', 'r') as f:
-        uptime_seconds = int(float(f.readline().split()[0]))
-        uptime_string = str(timedelta(seconds = uptime_seconds))
-        if (uptime_seconds < 10*60*60):
-            uptime_string = '0'+uptime_string
-    return uptime_string
+            if 'data' in msg and host == self._hn:
+                jd = msg["data"] if type(msg["data"]) == dict else json.loads(msg["data"])
+                if "value" in jd:
+                    en = None
+                    jd = jd["value"]
+                    if type(jd) == dict:
+                        for (k, v) in {k: _tvik(jd, k) for k in self._local_interest.keys()}.items():
+                            if v is not None:
+                                self._local_interest[k].append(v)
+                    else:
+                        if ename in self._local_interest:
+                            self._local_interest[ename].append(jd)
 
 if __name__ == '__main__':
     d = {}
@@ -121,35 +146,36 @@ if __name__ == '__main__':
     tchar = ':'
 
     ols = OLEDSubscriber()
+    ols.local_interest = ["temp", "hum", "pres", "Soil"]
 
     while 1:
+        _lst = mt.time()
         osd.rectangle((0,0,os.width,os.height), outline=0, fill=0)
 
-        L1 = 'No network data' if 'NetInfo' not in d else "{} {}".format(d['NetInfo']['interfaces']['wlan0']['addr'], d['NetInfo']['interfaces']['wlan0']['ssid'])
-        L2 = 'Soil: {:.0f}'.format(d['Soil']) if 'Soil' in d else "No soil data"
-        #L2 = "{:.1f}F AMB, {:.0f}F CPU".format(d['BME680']['temperature'], d['SysInfo']['cpuF']) if 'BME680' in d and 'SysInfo' in d else "No temperature data"
-        #L3 = 'No environmental data' if not ('BME680' in d and 'Soil' in d) else 'VOC: {:.0f}K  Soil: {:.0f}'.format(d['BME680']['gas_resistance'] / 1000.0, d['Soil'])
-        #L3 = 'No environmental data' if not 'BME680' in d else 'AQ,BP: {:.0f}K, {:.1f}'.format(d['BME680']['gas_resistance'] / 1000.0, d['BME680']['pressure'])
-        L3 = ""
+        _s = ols.statistics
+        _stc = float(_s["counts"]["total"])
+        _dc = 0
+        while _stc >= 1000.0:
+            _stc /= 1000.0
+            _dc += 1
+        _tcs_fs = "{: >6.0f}{}" if _dc == 0 else ("{: >4.2f}{}" if int(_stc / 10.0) == 0 else "{: >5.1f}{}")
+        _tcs = _tcs_fs.format(_stc, {0:"",1:"K",2:"M",3:"B"}[_dc])
+        L1 = "[MSGS] {: >6s}, {:0.2f}/s".format(_tcs, _s["per_second"])
+
+        _li = ols.local_interest
+        L2 = "{:0.1f}F  {:0.1f}%  {:0.2f}".format(_li["temp"], _li["hum"], _li["pres"])
 
         tm = mt.localtime()
-        cm = mt.time()
-        if (cm - lastMark) > 1.0:
+        if (_lst - lastMark) > 1.0:
             tchar = ' ' if tchar is ':' else ':'
-            lastMark = cm
-        L4 = "[{:02d}{}{:02d}{}{:02d}]   {}".format((tm.tm_hour%12), tchar, tm.tm_min, tchar, tm.tm_sec, "/: " +
-         ("{:.1f}%".format(100.0 - d['SysInfo']['fsFree%']['/']) if 'SysInfo' in d else '??.?%'))#uptime())
-
+            lastMark = _lst
+        L3 = "<{:02d}{}{:02d}{}{:02d}>    {}".format((tm.tm_hour%12), tchar, tm.tm_min, tchar, tm.tm_sec, 
+                "[S] {:0.1f}".format(((float(_li["Soil"]) / 100.0) * 1.4286) if bool(_li["Soil"]) else 0.0))
     
-        osd.text((x, top), str(L1).strip(), font=os.font, fill=255)
-        osd.text((x, top+8), str(L2), font=os.font, fill=255)
-        osd.text((x, top+16), str(L3), font=os.font, fill=255)
-        osd.text((x, top+24), str(L4), font=os.font, fill=255)
+        osd.text((x, top), str(L1), font=os.font, fill=255)
+        osd.text((x, top+12), str(L2), font=os.font, fill=255)
+        osd.text((x, top+23), str(L3), font=os.font, fill=255)
 
         os.render()
 
-        time.sleep(0.95)
-        print "STATS!  {}".format(ols.statistics)
-
-    for s in subs:
-        del s
+        time.sleep(1.0 - (mt.time() - _lst))

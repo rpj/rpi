@@ -30,6 +30,6 @@ class Factory(Sensor):
         if 'id' in data:
             del data['id']
         if 'uncompensated' in data:
-            data['uncompensated'] = self._attrs_to_dict(data['uncompensated'])
+            del data['uncompensated']
         self.publish(data)
 
