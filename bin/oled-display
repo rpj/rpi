@@ -29,6 +29,7 @@ class OLEDScreen(object):
         self._img = Image.new('1', (self._disp.width, self._disp.height))
         self._draw = ImageDraw.Draw(self._img)
         self._font = ImageFont.load_default()
+        self.__ic = 0
 
     @property
     def width(self):
@@ -50,6 +51,10 @@ class OLEDScreen(object):
         return self._draw
 
     def render(self):
+        self.__ic += 1
+        if not (self.__ic % 60):
+            self._img.save("/tmp/oled-display.bmp")
+            self.__ic = 0
         self._disp.image(self._img)
         self._disp.display()
 
