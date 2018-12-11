@@ -169,8 +169,9 @@ if __name__ == '__main__':
         if (_lst - lastMark) > 1.0:
             tchar = ' ' if tchar is ':' else ':'
             lastMark = _lst
-        L3 = "<{:02d}{}{:02d}{}{:02d}>    {}".format((tm.tm_hour%12), tchar, tm.tm_min, tchar, tm.tm_sec, 
-                "[S] {:0.1f}".format(((float(_li["Soil"]) / 100.0) * 1.4286) if bool(_li["Soil"]) else 0.0))
+        _soil = int(((float(_li["Soil"]) / 200.0) * 1.4286) if bool(_li["Soil"]) else 0)
+        L3 = "<{:02d}{}{:02d}{}{:02d}>  {}".format((tm.tm_hour%12), tchar, tm.tm_min, tchar, tm.tm_sec, 
+                "[S] {}{}".format("." * (5 - _soil), "|" * _soil))
     
         osd.text((x, top), str(L1), font=os.font, fill=255)
         osd.text((x, top+12), str(L2), font=os.font, fill=255)
