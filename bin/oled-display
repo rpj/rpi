@@ -52,7 +52,7 @@ class OLEDScreen(object):
 
     def render(self):
         self.__ic += 1
-        if not (self.__ic % 60):
+        if not (self.__ic % 10):
             self._img.save("/tmp/oled-display.bmp")
             self.__ic = 0
         self._disp.image(self._img)
