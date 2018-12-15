@@ -33,9 +33,30 @@ link_local_py_lib() {
 	echo "* Linking local Python library '${LIBDIR}'"
 	if [ ! -L "env/lib/python2.7/site-packages/${LIBDIR}" ]; then
 		pushd "env/lib/python2.7/site-packages/" > /dev/null
-		ln -s "../../../../${LIBDIR}"
+		ln -s "../../../../${LIBDIR}" 2> /dev/null > /dev/null
 		popd > /dev/null
 	fi
+}
+
+build_embedded_sps() {
+	echo -n "* Building embedded-sps submodule: "
+	git submodule init
+	git submodule update --recursive
+	pushd embedded-sps > /dev/null
+	pushd embedded-common > /dev/null
+	git submodule init
+	git submodule update --recursive
+	popd > /dev/null
+	make release > make.release.stdout 2> make.release.stderr
+	pushd release/sps30-i2c > /dev/null
+	pushd hw_i2c > /dev/null
+	mv sensirion_hw_i2c_implementation.c sensirion_hw_i2c_implementation.c.orig
+	ln -s sample-implementations/linux_user_space/sensirion_hw_i2c_implementation.c
+	popd > /dev/null
+	make > make.stdout 2> make.stderr
+	popd > /dev/null
+	popd > /dev/null
+	echo "done"
 }
 
 
@@ -50,9 +71,14 @@ REQ_FILE=requirements.txt
 
 cat /etc/os-release | perl -ne "exit(1), if (/ID=raspbian/)"
 if [ $? != 1 ]; then
-	echo "* Looks like you're installing on a non-RPi platform; omitting unneeded modules."
+	echo "*** Non-RPi platform detected: omitting unneeded modules."
+	echo
 	IS_RPI=0
 	REQ_FILE=requirements-nonRPi.txt
+else
+	echo "*** RPi platform detected: building sensor drivers and including hardware interface modules."
+	echo
+	build_embedded_sps
 fi
 
 check_and_install "which" "virtualenv"
@@ -73,11 +99,12 @@ source env/bin/activate
 link_local_py_lib "lib/rpjios"
 
 echo -n "* Installing required python modules from '${REQ_FILE}': "
-pip install -r ${REQ_FILE}
+pip install -r ${REQ_FILE} > pip-install.stdout 2> pip-install.stderr
+echo "done"
 
 if [ $? == 0 ]; then
 	echo ""
-	echo "*** Done! Run 'source env/bin/activate' to get started."
+	echo "*** Success! Run 'source env/bin/activate' to get started."
 else
 	echo "*** ERROR ***"
 fi
