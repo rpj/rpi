@@ -43,7 +43,6 @@ build_embedded_sps() {
 	git submodule init >> git-setup.stdout 2>> git-setup.stderr
 	git submodule update --recursive >> git-setup.stdout 2>> git-setup.stderr
 	pushd embedded-sps > /dev/null
-	pushd embedded-common > /dev/null
 	git submodule init >> git-setup.stdout 2>> git-setup.stderr
 	git submodule update --recursive >> git-setup.stdout 2>> git-setup.stderr
 	echo "done"
