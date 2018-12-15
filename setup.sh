@@ -46,7 +46,6 @@ build_embedded_sps() {
 	git submodule init >> git-setup.stdout 2>> git-setup.stderr
 	git submodule update --recursive >> git-setup.stdout 2>> git-setup.stderr
 	echo "done"
-	popd > /dev/null
 	echo -n "* Building embedded-sps submodule: "
 	make release > make.release.stdout 2> make.release.stderr
 	pushd release/sps30-i2c > /dev/null
