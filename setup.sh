@@ -39,14 +39,16 @@ link_local_py_lib() {
 }
 
 build_embedded_sps() {
-	echo -n "* Building embedded-sps submodule: "
-	git submodule init
-	git submodule update --recursive
+	echo -n "* Fetching embedded-sps submodule: "
+	git submodule init >> git-setup.stdout 2>> git-setup.stderr
+	git submodule update --recursive >> git-setup.stdout 2>> git-setup.stderr
 	pushd embedded-sps > /dev/null
 	pushd embedded-common > /dev/null
-	git submodule init
-	git submodule update --recursive
+	git submodule init >> git-setup.stdout 2>> git-setup.stderr
+	git submodule update --recursive >> git-setup.stdout 2>> git-setup.stderr
+	echo "done"
 	popd > /dev/null
+	echo -n "* Building embedded-sps submodule: "
 	make release > make.release.stdout 2> make.release.stderr
 	pushd release/sps30-i2c > /dev/null
 	pushd hw_i2c > /dev/null
@@ -95,8 +97,14 @@ if [ ${IS_RPI} == 1 ]; then
 fi
 
 if [ ! -d "./env" ]; then
-	echo "* Initializing virtualenv:"
-	virtualenv --system-site-packages --prompt="(rpjios virtualenv) " ./env
+	echo -n "* Initializing virtualenv: "
+	virtualenv --system-site-packages --prompt="(rpjios venv) " ./env > virtualenv-init.stdout 2> virtualenv-init.stderr
+	if [ $? != 0 ]; then
+		echo "failed! Cannot continue."
+		exit -1
+	else
+		echo "done"
+	fi
 fi
 
 source env/bin/activate
