@@ -72,14 +72,13 @@ REQ_FILE=requirements.txt
 cat /etc/os-release | perl -ne "exit(1), if (/ID=raspbian/)"
 if [ $? != 1 ]; then
 	echo "*** Non-RPi platform detected: omitting unneeded modules."
-	echo
 	IS_RPI=0
 	REQ_FILE=requirements-nonRPi.txt
 else
 	echo "*** RPi platform detected: building sensor drivers and including hardware interface modules."
-	echo
-	build_embedded_sps
 fi
+
+echo
 
 check_and_install "which" "virtualenv"
 check_and_install "which" "redis-server" "redis"
@@ -87,6 +86,7 @@ check_and_install "apt" "python-dev"
 
 if [ ${IS_RPI} == 1 ]; then
 	check_and_install "apt" "python-smbus"
+	build_embedded_sps
 fi
 
 if [ ! -d "./env" ]; then
