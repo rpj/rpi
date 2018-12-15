@@ -54,9 +54,14 @@ build_embedded_sps() {
 	ln -s sample-implementations/linux_user_space/sensirion_hw_i2c_implementation.c
 	popd > /dev/null
 	make > make.stdout 2> make.stderr
+	if [ -f libsps30.so ]; then
+		numSyms=`nm libsps30.so | grep -i sps | wc -l`
+		echo "success (${numSyms})"
+	else
+		echo  "failure!"
+	fi
 	popd > /dev/null
 	popd > /dev/null
-	echo "done"
 }
 
 
