@@ -20,7 +20,7 @@ check_and_install() {
 		if [ -z "$_N" ]; then
 			_N=$PKGNAME
 		fi
-		echo "* Trying to install '${_N}..."
+		echo "* Trying to install ${_N}..."
 		sudo apt -y install ${_N} > ${_N}_apt-install.stdout 2> ${_N}_apt-install.stderr
 	else
 		echo "found"
