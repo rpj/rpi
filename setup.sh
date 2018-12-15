@@ -88,7 +88,7 @@ fi
 echo
 
 check_and_install "which" "virtualenv"
-check_and_install "which" "redis-server" "redis"
+check_and_install "which" "redis" "redis-server"
 check_and_install "which" "zip"
 check_and_install "apt" "python-dev"
 
