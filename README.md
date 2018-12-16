@@ -50,7 +50,7 @@ might help others in their projects.
 			* `sqlite-sink path-to-db.sqlite3`
 				* (lots of "TODOs" here, obviously) 
 * [oled-display](bin/oled-display): an [OLED display](https://www.adafruit.com/product/661) driver for consuming & display some sensor data, among other things
-* [thingspeak](bin/thinkspeak): a simple example of a [ThingSpeak](http://thingspeak.com) data forwarder for the SPS30 particulate matter sensor data. [Example resulting data set](https://thingspeak.com/channels/655525).
+* [thingspeak](bin/thingspeak): a simple example of a [ThingSpeak](http://thingspeak.com) data forwarder for the SPS30 particulate matter sensor data. [Example resulting data set](https://thingspeak.com/channels/655525).
 
 ## Library
 
