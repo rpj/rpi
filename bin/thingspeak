@@ -1,0 +1,47 @@
+#!/usr/bin/env python
+
+import time
+import json
+import urllib
+import urllib2
+import sys
+from datetime import datetime
+from rpjios.SubscriberBase import PSubscriber
+
+SEND_EVERY = 20 # seconds
+FIELDS = ['mc_1p0', 'mc_2p5', 'mc_4p0', 'mc_10p0', 'nc_0p5', 'nc_2p5', 'nc_10p0', 'typical_particle_size']
+CHANNEL_ID = 655525
+API_WRITE_KEY = sys.argv[1]
+LOC = (38.61971,-122.8598856)
+WRITE_URL = "https://api.thingspeak.com/update.json?api_key={}".format(API_WRITE_KEY)
+
+msg_c = 1
+def msg_rx(msg):
+    global msg_c
+    if not msg_c % SEND_EVERY:
+        _d = json.loads(msg["data"])
+        (ts, val) = (_d["ts"], _d["value"])
+        _pl = { 
+                "created_at": datetime.fromtimestamp(ts).isoformat(),
+                "latitude": LOC[0],
+                "longitude": LOC[1],
+                "channel_id": CHANNEL_ID,
+            }
+        for fi in range(0, len(FIELDS)):
+            _pl["field{}".format(fi+1)] = val[FIELDS[fi]]
+        _params = urllib.urlencode(_pl)
+        _url = "{}&{}".format(WRITE_URL, _params)
+        _resp = urllib2.urlopen(_url)
+        _rread = _resp.read()
+        _rc = _resp.getcode()
+        if _rc != 200:
+            print "Request failure ({})! URL: {}".format(_rc, _url)
+        else:
+            print "Success: entry #{} added".format(json.loads(_rread)["entry_id"])
+        msg_c = 1
+    msg_c += 1
+
+p = PSubscriber("*SPS30*").add_listener(msg_rx)
+
+while 1:
+    time.sleep(0.5)
