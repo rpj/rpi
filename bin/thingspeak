@@ -8,7 +8,7 @@ import sys
 from datetime import datetime
 from rpjios.SubscriberBase import PSubscriber
 
-SEND_EVERY = 20 # seconds
+SEND_EVERY = 20 # samples
 FIELDS = ['mc_1p0', 'mc_2p5', 'mc_4p0', 'mc_10p0', 'nc_0p5', 'nc_2p5', 'nc_10p0', 'typical_particle_size']
 CHANNEL_ID = 655525
 API_WRITE_KEY = sys.argv[1]
