@@ -1,7 +1,7 @@
 # RPJiOS
 
 A [pub/sub](https://en.wikipedia.org/wiki/Publish–subscribe_pattern)-based implementation of a 
-Raspberry Pi system platform built on [redis](https://redis.io) and centered around sensors.
+Raspberry Pi data pipeline built on [redis](https://redis.io) and centered around sensors.
 
 The general philosophy is that a "sensor" is any entity (physical or not) that operates primarily
 in an output-only mode (configuration doesn't necessarily count as an "input" so is allowable).
@@ -13,33 +13,35 @@ and/or persist it according to their requirements.
 ## Caveat emptor
 
 This is still very much an active work-in-progress, however as it is functional, useful and "deployed" 
-(I use it in to run my "garden monitoring bots"), I figured it was worth making public in the event it
+(I use it in to run my "garden monitoring bots" among other things), I figured it was worth making public in the event it
 might help others in their projects.
 
 ## Requirements
 
-* a Raspberry Pi running a recent Raspbian build
-	* (not exactly: it should run on any linux OS, and definitely does on any "Debian-like" OS but needs a bit of tweaks to do so. TODO: fix that; it's already running on charlie anyway)
-* some sensors, configured appropriately (see below (TODO))
-	* depending on your chosen sensors: I2C enabled, SPI enabled (TODO: link to instructions)
-* `virtualenv` (python2.7)
-* `redis` (running locally, at very least)
-* `python-smbus`
+* Hardware:
+	* a Raspberry Pi running a recent Raspbian build (for sensor nodes)
+	* any Debian-like system running apt (for managment/non-sensor nodes)
+* some sensors, configured appropriately (most easily done with `raspi-config`):
+	* depending on your chosen sensors: I2C enabled, SPI enabled, 1-wire enabled
 
 ## Setup
 
 * Clone the repo
 * `cd` into repo dir
 * `./setup.sh` (you might need to enter your `sudo` password to install requirements)
-* `source env/bin/activate` and go
+* `source env/bin/activate` and go!
 
 ## Tools
 
 * [sensors-src](bin/sensors-src): source daemon that manages all specified sensors and publishes their data as configured
-* [downsample](bin/downsample): a downsampler/transformer(TODO). example uses:
+* [downsample](bin/downsample): a very flexible data stream downsampler/forwarder/transformer. example uses:
 	* an at-frequency forwarder (set `-r 1`)
 	* a loopback downsampler (set `-o` to the same as `-i`)
-	* a many-to-one reducer (set `-t` to `key`, lots of potential "TODO" here)
+	* a many-to-one reducer (set `-t` to `key`)
+	* a one-to-many exploder (set `-m` to `flatten:[options]`)
+	* a bounded ephemeral cache (set `-t` to `list:[options]`, where the `limit=X` option sets the bound)
+	* ...
+	* profit!
 * [sqlite-sink](bin/sqlite-sink): an [SQLite](https://www.sqlite.org) sink for data streams. examples:
 	* sink to an SQLite database on a different host a downsampled data stream:
 		1. on the source device:
@@ -48,13 +50,15 @@ might help others in their projects.
 			* `sqlite-sink path-to-db.sqlite3`
 				* (lots of "TODOs" here, obviously) 
 * [oled-display](bin/oled-display): an [OLED display](https://www.adafruit.com/product/661) driver for consuming & display some sensor data, among other things
+* [thingspeak](bin/thinkspeak): a simple example of a [ThingSpeak](http://thingspeak.com) data forwarder for the SPS30 particulate matter sensor data. [Example resulting data set](https://thingspeak.com/channels/655525).
 
 ## Library
 
-### Sensors & Devices
+### Sensors
 
 The following are currently supported (with the required drivers / interfaces setup of course):
 
+* [SPS30](https://www.sensirion.com/en/environmental-sensors/particulate-matter-sensors-pm25/) I2C particulate matter air quality sensor. [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/SPS30.py)
 * [BME680](https://cdn-shop.adafruit.com/product-files/3660/BME680.pdf) temperature / humidity / barometeric pressure / volatile organic compound I2C sensor. My setup uses [AdaFruit's awesome breakout board](https://www.adafruit.com/product/3660) for ease-of-integration. [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/BME680.py)
 * [BME280](https://www.bosch-sensortec.com/bst/products/all_products/bme280) temperature / humidity / barometeric pressure I2C sensor. [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/BME280.py)
 * [DHTXX](https://www.mouser.com/ds/2/737/dht-932870.pdf)(DHT11/DHT22) temperature / humidity sensors. I use [DFRobot's](https://www.dfrobot.com/product-1102.html) [breakouts](https://www.dfrobot.com/product-174.html) but you can find similar breakout's from many (re)sellers online. [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/DHTXX.py)
@@ -65,13 +69,13 @@ The following are currently supported (with the required drivers / interfaces se
 
 Variants of these sensors could likely be made to work with this system via simple modifications if any are required at all.
 
-Additionally, a simple Python driver for the [74HC595](http://www.ti.com/lit/ds/symlink/sn74hc595.pdf) 8-bit shift register is included [here](https://github.com/rpj/rpi/blob/master/lib/rpjios/devices/74HC595.py).
+### Devices
+
+* A simple Python wrapper driver for the SPS30 sensor is included [here](https://github.com/rpj/rpi/blob/master/lib/rpjios/devices/SPS30.py), wrapping the included [embedded-sps](https://github.com/rpj/embedded-sps/tree/1aabaead20059262d66e113d511157c6fda4133a) I2C driver from Sensiron implemented in C (forked to include a shared object build step for Python consumption). 
+* A simple Python driver for the [74HC595](http://www.ti.com/lit/ds/symlink/sn74hc595.pdf) 8-bit shift register is included [here](https://github.com/rpj/rpi/blob/master/lib/rpjios/devices/74HC595.py).
 
 ## Related
 
-* [RPJiOS-Web](https://github.com/rpj/rpjios-web): A [Flask](http://flask.pocoo.org/) web frontend currently deployed as [rpjios.com](http://rpjios.com) on [Heroku](http://heroku.com)
-	* Demonstrates the use of the `-t key` passthru mode of `downsample`, e.g.:
-		* `downsample -t 'key' -i 'redis://localhost' -o 'redis://REDACTED@ec2-REDACTED.compute-1.amazonaws.com:REDACTED' -p 'rpjios.sensors.*'`
 * [The old now-archived repository](https://github.com/rpj/rpi.archive) from whence this all came
 	* might still contain some useful stuff: D3-based "live" analog data plotting code in `rpjctrl`, and I'm still using `ledCount.py` on some of my units because I'm too lazy to re-write it properly
 
