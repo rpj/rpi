@@ -13,4 +13,6 @@ class Factory(Sensor):
         self._meta['driver_version'] = self._sps.driver_version
 
     def _runloop(self):
-        self.publish(self._attrs_to_dict(self._sps.measurement))
+        meas = self._sps.measurement
+        if meas is not None:
+            self.publish(self._attrs_to_dict(meas))
