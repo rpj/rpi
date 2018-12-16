@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+# To run: set environment variable REDIS_URL to the input instance, 
+# and pass the ThingSpeak channel ID and API write key as the CLI arguments:
+# $ REDIS_URL="redis://input_host" ./thingspeak TS_CHANNEL_ID TS_CHANNEL_API_WRITE_KEY
+# set LOC to a (LAT, LNG) tuple if you want to include location information
 
 import time
 import json
@@ -10,9 +14,9 @@ from rpjios.SubscriberBase import PSubscriber
 
 SEND_EVERY = 20 # samples
 FIELDS = ['mc_1p0', 'mc_2p5', 'mc_4p0', 'mc_10p0', 'nc_0p5', 'nc_2p5', 'nc_10p0', 'typical_particle_size']
-CHANNEL_ID = 655525
-API_WRITE_KEY = sys.argv[1]
-LOC = (38.61971,-122.8598856)
+CHANNEL_ID = int(sys.argv[1]) 
+API_WRITE_KEY = sys.argv[2]
+LOC = None
 WRITE_URL = "https://api.thingspeak.com/update.json?api_key={}".format(API_WRITE_KEY)
 
 msg_c = 1
@@ -23,10 +27,11 @@ def msg_rx(msg):
         (ts, val) = (_d["ts"], _d["value"])
         _pl = { 
                 "created_at": datetime.fromtimestamp(ts).isoformat(),
-                "latitude": LOC[0],
-                "longitude": LOC[1],
-                "channel_id": CHANNEL_ID,
+                "channel_id": CHANNEL_ID
             }
+        if LOC is not None:
+            _pl["latitude"] = LOC[0]
+            _pl["longitude"] = LOC[1]
         for fi in range(0, len(FIELDS)):
             _pl["field{}".format(fi+1)] = val[FIELDS[fi]]
         _params = urllib.urlencode(_pl)
