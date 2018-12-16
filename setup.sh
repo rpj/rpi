@@ -56,6 +56,7 @@ build_embedded_sps() {
 	make > make.stdout 2> make.stderr
 	if [ -f libsps30.so ]; then
 		numSyms=`nm libsps30.so | grep -i sps | wc -l`
+		cp libsps30.so ../../../lib/rpjios/devices/
 		echo "success (${numSyms})"
 	else
 		echo  "failure!"
