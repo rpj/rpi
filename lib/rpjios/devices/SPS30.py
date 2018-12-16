@@ -57,12 +57,11 @@ class SPS30(object):
                 raise BaseException("Failed to put SPS30 into measurement mode!")
             self._measurement_running = True
         data_ready = ct.c_byte()
-        if self._lib.sps30_read_data_ready(ct.byref(data_ready)) != 0:
-            raise BaseException("read_data_ready")
-        if bool(data_ready.value):
-            self._latest_measurement = Measurement() 
-            if self._lib.sps30_read_measurement(ct.byref(self._latest_measurement)) != 0:
-                raise BaseException("read_measurement")
+        if self._lib.sps30_read_data_ready(ct.byref(data_ready)) == 0:
+            if bool(data_ready.value):
+                self._latest_measurement = SPS30.Measurement()
+                if self._lib.sps30_read_measurement(ct.byref(self._latest_measurement)) != 0:
+                    raise BaseException("read_measurement")
         return self._latest_measurement
 
 if __name__ == "__main__":
@@ -71,16 +70,17 @@ if __name__ == "__main__":
     print "SPS30 S/N {}, driver '{}'".format(sps30.serial_number, sps30.driver_version)
     while 1:
         meas = sps30.measurement
-        print ""
-        print "PM1.0:\t{}".format(meas.mc_1p0)
-        print "PM2.5:\t{}".format(meas.mc_2p5)
-        print "PM4.0:\t{}".format(meas.mc_4p0)
-        print "PM10.0:\t{}".format(meas.mc_10p0)
-        print "NC0.5:\t{}".format(meas.nc_0p5)
-        print "NC1.0:\t{}".format(meas.nc_1p0)
-        print "NC2.5:\t{}".format(meas.nc_2p5)
-        print "NC4.0:\t{}".format(meas.nc_4p0)
-        print "NC10.0:\t{}".format(meas.nc_10p0)
-        print "TypSz:\t{}".format(meas.typical_particle_size) 
+        if meas is not None:
+            print ""
+            print "PM1.0:\t{}".format(meas.mc_1p0)
+            print "PM2.5:\t{}".format(meas.mc_2p5)
+            print "PM4.0:\t{}".format(meas.mc_4p0)
+            print "PM10.0:\t{}".format(meas.mc_10p0)
+            print "NC0.5:\t{}".format(meas.nc_0p5)
+            print "NC1.0:\t{}".format(meas.nc_1p0)
+            print "NC2.5:\t{}".format(meas.nc_2p5)
+            print "NC4.0:\t{}".format(meas.nc_4p0)
+            print "NC10.0:\t{}".format(meas.nc_10p0)
+            print "TypSz:\t{}".format(meas.typical_particle_size) 
         time.sleep(2)
 
