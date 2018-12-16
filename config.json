@@ -15,12 +15,12 @@
 		},
 		{ 
 			"name": "NetInfo", 
-			"disabled": false,
+			"disabled": true,
 			"config": { "frequency": 0.1 }	
 		},
 		{ 
 			"name": "SysInfo",
-			"disabled": false,
+			"disabled": true,
 			"config": {
 				"frequency": 0.2
 			}
@@ -66,11 +66,19 @@
 		},
 		{
 			"name": "DHTXX",
-			"disabled": false,
+			"disabled": true,
 			"config": {
 				"data_pin": 23,
 				"variant": 11,
 				"frequency": 0.2
+			}
+		},
+		{
+			"name": "SPS30",
+			"disabled": false,
+			"config": {
+				"frequency": 0.5,
+				"shared_object_path": "/home/pi/rpi/env/lib/python2.7/site-packages/rpjios/devices/libsps30.so"
 			}
 		}
 	]
