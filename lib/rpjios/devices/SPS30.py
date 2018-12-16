@@ -26,7 +26,7 @@ class SPS30(object):
     def measurement(self):
         return self._get_measurement()
 
-    def __init__(self, shared_object_path="./libsps30.so", *args, **kwargs):
+    def __init__(self, shared_object_path="libsps30.so", *args, **kwargs):
         self._lib = ct.cdll.LoadLibrary(shared_object_path)
         if not self._lib:
             raise BaseException("Unable to load shared SPS30 library from '{}'".format(shared_object_path))
