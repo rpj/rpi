@@ -23,8 +23,7 @@ might help others in their projects.
 	* any Debian-like system running apt (for managment/non-sensor nodes)
 * some [sensors](#sensors), configured appropriately (most easily done with `raspi-config`):
 	* depending on your chosen sensors: I2C enabled, SPI enabled, 1-wire enabled
-	* other sensors - LM335, Soil, TEPT5700 - require an external ADC [MCP3008](http://ww1.microchip.com/downloads/en/devicedoc/21295c.pdf) (supported by [AnalogBase](https://github.com/rpj/rpi/blob/master/lib/rpjios/AnalogBase.py))
-		* channel (zero-indexed) is specified in [`config.json`](https://github.com/rpj/rpi/blob/master/config.json#L62)
+	* other sensors (LM335, Soil, TEPT5700) require an [external ADC](#devices) which itself will require SPI
 
 ## Setup
 
@@ -75,7 +74,8 @@ Variants of these sensors could likely be made to work with this system via simp
 
 * A simple Python wrapper driver for the SPS30 sensor is included [here](https://github.com/rpj/rpi/blob/master/lib/rpjios/devices/SPS30.py), wrapping the included [embedded-sps](https://github.com/rpj/embedded-sps/tree/1aabaead20059262d66e113d511157c6fda4133a) I2C driver from Sensiron implemented in C (forked to include a shared object build step for Python consumption). 
 * A simple Python driver for the [74HC595](http://www.ti.com/lit/ds/symlink/sn74hc595.pdf) 8-bit shift register is included [here](https://github.com/rpj/rpi/blob/master/lib/rpjios/devices/74HC595.py).
-* The venerable [MCP3008](http://ww1.microchip.com/downloads/en/devicedoc/21295c.pdf) 16-bit 8-channel analog-to-digital converter is directly supported by the [AnalogBase](https://github.com/rpj/rpi/blob/master/lib/rpjios/AnalogBase.py). Other ADCs would be quite simple to adapt (even more so if I implemented a HAL... #TODO).
+* The venerable [MCP3008](http://ww1.microchip.com/downloads/en/devicedoc/21295c.pdf) 16-bit 8-channel analog-to-digital converter is directly supported by the [base analog sensor implementation](https://github.com/rpj/rpi/blob/master/lib/rpjios/AnalogBase.py). Other ADCs would be quite simple to adapt (even more so if I implemented a HAL... #TODO).
+	* channel (zero-indexed) is specified in [`config.json`](https://github.com/rpj/rpi/blob/master/config.json#L62)
 
 ## Related
 
