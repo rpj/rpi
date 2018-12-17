@@ -41,8 +41,10 @@ def msg_rx(msg):
         _rc = _resp.getcode()
         if _rc != 200:
             print "Request failure ({})! URL: {}".format(_rc, _url)
-        else:
+        elif type(_rread) == str:
             print "Success: entry #{} added".format(json.loads(_rread)["entry_id"])
+        else:
+            print "Unknown failure: {} {}".format(_rc, _rread)
         msg_c = 1
     msg_c += 1
 
