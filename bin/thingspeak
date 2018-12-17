@@ -39,12 +39,15 @@ def msg_rx(msg):
         _resp = urllib2.urlopen(_url)
         _rread = _resp.read()
         _rc = _resp.getcode()
-        if _rc != 200:
-            print "Request failure ({})! URL: {}".format(_rc, _url)
-        elif type(_rread) == str:
-            print "Success: entry #{} added".format(json.loads(_rread)["entry_id"])
-        else:
-            print "Unknown failure: {} {}".format(_rc, _rread)
+        try:
+            if _rc != 200:
+                print "Request failure ({})! URL: {}".format(_rc, _url)
+            elif type(_rread) == str:
+                print "Success: entry #{} added".format(json.loads(_rread)["entry_id"])
+            else:
+                print "Unknown failure: {} {}".format(_rc, _rread)
+        except Exception as e:
+            print "Unknown failure: {} ({})".format(e, _rc)
         msg_c = 1
     msg_c += 1
 
