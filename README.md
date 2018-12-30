@@ -1,5 +1,9 @@
 # RPJiOS
 
+![Raspberry Pi Zero W](https://www.vectorlogo.zone/logos/raspberrypi/raspberrypi-ar21.svg)
+![Python](https://www.vectorlogo.zone/logos/python/python-ar21.svg)
+![Redis](https://www.vectorlogo.zone/logos/redis/redis-ar21.svg)
+
 A [pub/sub](https://en.wikipedia.org/wiki/Publish–subscribe_pattern)-based implementation of a 
 Raspberry Pi data pipeline built on [redis](https://redis.io) and centered around sensors.
 
@@ -12,9 +16,9 @@ and/or persist it according to their requirements.
 
 ## Caveat emptor
 
-This is still very much an active work-in-progress, however as it is functional, useful and "deployed" 
-(I use it in to run my "garden monitoring bots" among other things), I figured it was worth making public in the event it
-might help others in their projects.
+This is still very much an active work-in-progress! However, as it is functional, useful and deployed I figured it was worth making public in the event it might help others in their projects.
+
+Those current deployments consist of my [atmospheric particulate matter sensor](https://www.hackster.io/rpj/atmospheric-particulate-matter-environmental-sensing-fb31a1) and my garden monitoring bots, with the entire system handling (on average) about a half-million units of sensor data per day.
 
 ## Requirements
 
@@ -67,6 +71,7 @@ The following are currently supported (with the required drivers / interfaces se
 * [LM335](http://www.ti.com/lit/ds/symlink/lm335.pdf) precision analog temperature sensor. [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/LM335.py)
 * Capacative soil moisture sensors such as the DFRobot [SEN0114](https://www.dfrobot.com/product-599.html) or any [simple-to-build capactive analog moisture sensor](http://gardenbot.org/howTo/soilMoisture/). [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/Soil.py)
 * [TEPT5700](https://www.vishay.com/docs/81321/tept5700.pdf) ambient light sensor. [Source.](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/TEPT5700.py)
+* "Virtual" sensors such as [SysInfo](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/SysInfo.py) and [NetInfo](https://github.com/rpj/rpi/blob/master/lib/rpjios/sensors/NetInfo.py) that do not require any additional hardware.
 
 Variants of these sensors could likely be made to work with this system via simple modifications if any are required at all.
 
@@ -74,7 +79,7 @@ Variants of these sensors could likely be made to work with this system via simp
 
 * A simple Python wrapper driver for the SPS30 sensor is included [here](https://github.com/rpj/rpi/blob/master/lib/rpjios/devices/SPS30.py), wrapping the included [embedded-sps](https://github.com/rpj/embedded-sps/tree/1aabaead20059262d66e113d511157c6fda4133a) I2C driver from Sensiron implemented in C (forked to include a shared object build step for Python consumption). 
 * A simple Python driver for the [74HC595](http://www.ti.com/lit/ds/symlink/sn74hc595.pdf) 8-bit shift register is included [here](https://github.com/rpj/rpi/blob/master/lib/rpjios/devices/74HC595.py).
-* The venerable [MCP3008](http://ww1.microchip.com/downloads/en/devicedoc/21295c.pdf) 16-bit 8-channel analog-to-digital converter is directly supported by the [base analog sensor implementation](https://github.com/rpj/rpi/blob/master/lib/rpjios/AnalogBase.py). Other ADCs would be quite simple to adapt (even more so if I implemented a HAL... #TODO).
+* The venerable [MCP3008](http://ww1.microchip.com/downloads/en/devicedoc/21295c.pdf) 10-bit 8-channel analog-to-digital converter is directly supported by the [base analog sensor implementation](https://github.com/rpj/rpi/blob/master/lib/rpjios/AnalogBase.py). Other ADCs would be quite simple to adapt (even more so if I implemented a HAL... #TODO).
 	* channel (zero-indexed) is specified in [`config.json`](https://github.com/rpj/rpi/blob/master/config.json#L62)
 
 ## Related
