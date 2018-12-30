@@ -17,7 +17,7 @@ and/or persist it according to their requirements.
 
 ## Caveat emptor
 
-This is still very much an active work-in-progress! However, as it is functional, useful and deployed I figured it was worth making public in the event it might help others in their projects.
+This is still very much an active work-in-progress! However, as it is functional and actively deployed I figured it was worth making public in the event it might help others in their projects.
 
 Those current deployments consist of my [atmospheric particulate matter sensor](https://www.hackster.io/rpj/atmospheric-particulate-matter-environmental-sensing-fb31a1) and my garden monitoring bots, with the entire system handling (on average) about a half-million units of sensor data per day.
 
