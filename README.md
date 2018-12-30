@@ -1,9 +1,9 @@
 # RPJiOS
 
-![Raspberry Pi Zero W](https://www.vectorlogo.zone/logos/raspberrypi/raspberrypi-ar21.svg)
-![Python](https://www.vectorlogo.zone/logos/python/python-ar21.svg)
-![Redis](https://www.vectorlogo.zone/logos/redis/redis-ar21.svg)
-![Debian](https://www.vectorlogo.zone/logos/debian/debian-ar21.svg)
+[![Raspberry Pi Zero W](https://www.vectorlogo.zone/logos/raspberrypi/raspberrypi-ar21.svg)](https://www.raspberrypi.org/)
+[![Python](https://www.vectorlogo.zone/logos/python/python-ar21.svg)](https://www.python.org/)
+[![Redis](https://www.vectorlogo.zone/logos/redis/redis-ar21.svg)](https://redis.io/)
+[![Debian](https://www.vectorlogo.zone/logos/debian/debian-ar21.svg)](https://www.raspbian.org/)
 
 A [pub/sub](https://en.wikipedia.org/wiki/Publish–subscribe_pattern)-based implementation of a 
 Raspberry Pi data pipeline built on [redis](https://redis.io) and centered around sensors.
