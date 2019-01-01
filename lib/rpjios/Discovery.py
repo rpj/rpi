@@ -17,8 +17,12 @@ class Discovery(RedisBase.Redis):
 
     def _checkin_set_host(self, cd):
         hname = "{}.checkin.{}".format(NAMESPACE, cd["host"])
-        added = reduce(lambda x, a: x + a, map(lambda k: self._r.hset(hname, k, json.dumps(cd[k])), cd))
-        self._r.expire(hname, DEFAULT_TTL * 60)
+        rpipe = self._r.pipeline(True)
+        map(lambda k: rpipe.hset(hname, k, json.dumps(cd[k])), cd)
+        rpipe.expire(hname, DEFAULT_TTL * 60)
+        if "lt" in cd:
+            rpipe.hset("{}.__meta.checkin".format(NAMESPACE), hname, json.dumps(cd))
+        return rpipe.execute()
 
     def checkin(self):
         cd = {'ext_ip':None, 'up':Util.uptime(),'lt':str(datetime.now()),'host':Util.hostname(),'ifaces':Util.network_ifaces()}
@@ -31,4 +35,4 @@ class Discovery(RedisBase.Redis):
         return self._checkin_set_host(cd)
 
 if __name__ == "__main__":
-    Discovery().checkin()
+    print "{}".format(Discovery().checkin())
