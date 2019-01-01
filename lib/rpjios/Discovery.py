@@ -9,9 +9,16 @@ from datetime import datetime
 # TODO: define this shit once and for all somewhere...
 NAMESPACE = 'rpjios'
 
+DEFAULT_TTL = 5 # minutes
+
 class Discovery(RedisBase.Redis):
     def __init__(self, *args, **kwargs):
         super(Discovery, self).__init__(*args, **kwargs)
+
+    def _checkin_set_host(self, cd):
+        hname = "{}.checkin.{}".format(NAMESPACE, cd["host"])
+        added = reduce(lambda x, a: x + a, map(lambda k: self._r.hset(hname, k, json.dumps(cd[k])), cd))
+        self._r.expire(hname, DEFAULT_TTL * 60)
 
     def checkin(self):
         cd = {'ext_ip':None, 'up':Util.uptime(),'lt':str(datetime.now()),'host':Util.hostname(),'ifaces':Util.network_ifaces()}
@@ -21,9 +28,7 @@ class Discovery(RedisBase.Redis):
         except:
             pass
 
-        # returns the number of *added* keys, so may be zero even in success. basically, a terrible return value here.
-        return reduce(lambda x, a: x + a, map(lambda k: self._r.hset("{}.checkin.{}".format(NAMESPACE, cd['host']), k, json.dumps(cd[k])), cd))
+        return self._checkin_set_host(cd)
 
 if __name__ == "__main__":
-    d = Discovery()
-    print "{}: added {} keys".format(d, d.checkin())
+    Discovery().checkin()
