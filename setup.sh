@@ -90,6 +90,7 @@ check_and_install "which" "virtualenv"
 check_and_install "apt" "redis-server"
 check_and_install "which" "zip"
 check_and_install "apt" "python-dev"
+check_and_install "libjpeg9-dev" "libjpeg9-dev"
 
 if [ ${IS_RPI} == 1 ]; then
 	check_and_install "apt" "python-smbus"
@@ -111,7 +112,7 @@ source env/bin/activate
 
 link_local_py_lib "lib/rpjios"
 
-echo -n "* Installing required python modules from '${REQ_FILE}': "
+echo -n "* Installing modules from '${REQ_FILE}' (this may take awhile): "
 pip install -r ${REQ_FILE} > pip-install.stdout 2> pip-install.stderr
 echo "done"
 
