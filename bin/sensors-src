@@ -47,6 +47,10 @@ if __name__ == '__main__':
         else:
             raise BaseException("Unknown sensor type '{}' configured!".format(s['name']))
 
+    if len(sl.keys()) == 0:
+        print "* No sensors enabled, ending immediately."
+        sh(None, None)
+
     while RUNNING:
         time.sleep(0.25)
 
