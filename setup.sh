@@ -90,7 +90,7 @@ check_and_install "which" "virtualenv"
 check_and_install "apt" "redis-server"
 check_and_install "which" "zip"
 check_and_install "apt" "python-dev"
-check_and_install "libjpeg9-dev" "libjpeg9-dev"
+check_and_install "apt" "libjpeg9-dev"
 
 if [ ${IS_RPI} == 1 ]; then
 	check_and_install "apt" "python-smbus"
