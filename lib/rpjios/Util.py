@@ -92,3 +92,8 @@ def hostname():
             HOSTNAME = socket.gethostname()
     return HOSTNAME
 
+def version():
+    if os.path.exists('version.txt'):
+        with open('version.txt', 'r') as vt:
+            return vt.read().strip()
+    return "no-version"

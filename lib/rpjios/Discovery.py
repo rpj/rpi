@@ -25,7 +25,7 @@ class Discovery(RedisBase.Redis):
         return rpipe.execute()
 
     def checkin(self):
-        cd = {'ext_ip':None, 'up':Util.uptime(),'lt':str(datetime.now()),'host':Util.hostname(),'ifaces':Util.network_ifaces()}
+        cd = {'ext_ip':None, 'ver':Util.version(),'up':Util.uptime(),'lt':str(datetime.now()),'host':Util.hostname(),'ifaces':Util.network_ifaces()}
 
         try:
             cd['ext_ip'] = json.loads(urllib2.urlopen("https://api.ipify.org?format=json").read())['ip']
