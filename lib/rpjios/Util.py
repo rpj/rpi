@@ -93,7 +93,8 @@ def hostname():
     return HOSTNAME
 
 def version():
-    if os.path.exists('version.txt'):
-        with open('version.txt', 'r') as vt:
+    epath = os.path.abspath("{}/../../version.txt".format(os.path.split(__file__)[0]))
+    if os.path.exists(epath):
+        with open(epath, 'r') as vt:
             return vt.read().strip()
-    return "no-version"
+    return "(no-version)"
