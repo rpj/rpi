@@ -128,17 +128,21 @@ class OLEDSubscriber(object):
             self._counts['total'] += 1
 
             if 'data' in msg and host == self._hn:
-                jd = msg["data"] if type(msg["data"]) == dict else json.loads(msg["data"])
-                if "value" in jd:
-                    en = None
-                    jd = jd["value"]
-                    if type(jd) == dict:
-                        for (k, v) in {k: _tvik(jd, k) for k in self._local_interest.keys()}.items():
-                            if v is not None:
-                                self._local_interest[k].append(v)
-                    else:
-                        if ename in self._local_interest:
-                            self._local_interest[ename].append(jd)
+                try:
+                    jd = msg["data"] if type(msg["data"]) == dict else json.loads(msg["data"])
+                    if "value" in jd:
+                        en = None
+                        jd = jd["value"]
+                        if type(jd) == dict:
+                            for (k, v) in {k: _tvik(jd, k) for k in self._local_interest.keys()}.items():
+                                if v is not None:
+                                    self._local_interest[k].append(v)
+                        else:
+                            if ename in self._local_interest:
+                                self._local_interest[ename].append(jd)
+                except:
+                    print "SHIT"
+                    pass
 
 if __name__ == '__main__':
     d = {}
@@ -148,10 +152,10 @@ if __name__ == '__main__':
     x = 0
     top = -2
     lastMark = mt.time()
-    tchar = ':'
+    tchar = ' '
 
     ols = OLEDSubscriber()
-    ols.local_interest = ["temp", "hum", "pres", "Soil"]
+    ols.local_interest = ["temp", "hum", "pres", "Soil", "cpuF"]
 
     while 1:
         _lst = mt.time()
@@ -165,18 +169,21 @@ if __name__ == '__main__':
             _dc += 1
         _tcs_fs = "{: >6.0f}{}" if _dc == 0 else ("{: >4.2f}{}" if int(_stc / 10.0) == 0 else "{: >5.1f}{}")
         _tcs = _tcs_fs.format(_stc, {0:"",1:"K",2:"M",3:"B"}[_dc])
-        L1 = "[MSGS] {: >6s}, {:0.2f}/s".format(_tcs, _s["per_second"])
+        L1 = "pearl> {: >6s}, {:0.2f}/s".format(_tcs, _s["per_second"])
 
         _li = ols.local_interest
         L2 = "{:0.1f}F  {:0.1f}%  {:0.2f}".format(_li["temp"], _li["hum"], _li["pres"])
 
         tm = mt.localtime()
         if (_lst - lastMark) > 1.0:
-            tchar = ' ' if tchar is ':' else ':'
+            tchar = ':' if tchar is ' ' else ' '
             lastMark = _lst
-        _soil = int(((float(_li["Soil"]) / 200.0) * 1.4286) if bool(_li["Soil"]) else 0)
-        L3 = "<{:02d}{}{:02d}{}{:02d}>  {}".format((tm.tm_hour%12), tchar, tm.tm_min, tchar, tm.tm_sec, 
-                "[S] {}{}".format("." * (5 - _soil), "|" * _soil))
+        #__xc = lambda x: int(((float(_li["Soil"]) / 200.0) * 1.4286)
+        __xc = lambda x: int((((x + 20) - 600) / 100.0) * 5.0) if x < 700 else 5
+        _soil_xfunc = lambda x: __xc(x) if __xc(x) > 0 else 0
+        #_soil = _soil_xfunc(_li["Soil"]) if bool(_li["Soil"]) else 0
+        L3 = "({:02d}{}{:02d}{}{:02d})  {}".format((tm.tm_hour%12), tchar, tm.tm_min, tchar, tm.tm_sec, 
+                "cF[{:2.1f}]".format(_li["cpuF"]))#"." * (5 - _soil), "|" * _soil))
     
         osd.text((x, top), str(L1), font=os.font, fill=255)
         osd.text((x, top+12), str(L2), font=os.font, fill=255)
