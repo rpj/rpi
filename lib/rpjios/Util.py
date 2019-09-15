@@ -56,7 +56,12 @@ def _gather_wifi(iface):
             ta.append(g[gk])
         g[gk] = Popen(ta, stdout=PIPE).communicate()[0].strip()
         if gk == 'freq':
-            g[gk] = "{0:.2f} GHz".format(float(g[gk]) / 1e9)
+            fmtFreq = '??'
+            try:
+                fmtFreq = "{0:.2f}".format(float(g[gk]) / 1e9)
+            except:
+                pass
+            g[gk] = "{} GHz".format(fmtFreq)
     c2 = ["Bit Rate", "Tx-Power", "Link Quality", "Signal level"]
     c2d = {}
     for cl in Popen(['/sbin/iwconfig', iface], stdout=PIPE).communicate()[0].split('\n'):
