@@ -11,7 +11,7 @@ hiredis==0.2.0
 monotonic==1.5
 Pillow==6.2.0
 psutil==5.6.6
-redis==2.10.5
+redis==4.4.4
 RPi.GPIO==0.6.3
 RPi.bme280>=0.2.2
 smbus2>=0.2.1
